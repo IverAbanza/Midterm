@@ -1,81 +1,54 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var bikeController = BikeController()
+    @StateObject private var cartController = CartController()
+    @StateObject private var userController = UserController()
+    @StateObject private var orderController = OrderController()
+
+    @State private var currentTab = 0
+
     var body: some View {
-        TabView {
-            
-            HomeView()
-                .tabItem {
-                    Label("Home", systemImage: "house.fill")
+        if userController.isLoggedIn && userController.isAdmin {
+            AdminDashboardView(
+                bikeController: bikeController,
+                orderController: orderController,
+                userController: userController,
+                onLogout: {
+                    userController.logout()
                 }
-<<<<<<< HEAD
-            } else if userController.isAdmin {
-                AdminDashboardView(
-                    bikeController: bikeController,
-                    orderController: orderController,
-                    userController: userController,
-                    onLogout: {
-                        userController.logout()
-                        currentTab = 0
-                    }
-                )
-            } else {
-                TabView(selection: $currentTab) {
-                    HomeView(bikeController: bikeController, cartController: cartController, userController: userController)
-                        .tag(0)
-                        .tabItem { Label("Home", systemImage: "house") }
+            )
+        } else if userController.isLoggedIn {
+            TabView(selection: $currentTab) {
+                HomeView()
+                    .tag(0)
+                    .tabItem { Label("Home", systemImage: "house.fill") }
 
-                    ShopView(bikeController: bikeController, cartController: cartController, userController: userController)
-                        .tag(1)
-                        .tabItem { Label("Shop", systemImage: "bag") }
+                ShopView(bikeController: bikeController, cartController: cartController, userController: userController)
+                    .tag(1)
+                    .tabItem { Label("Shop", systemImage: "bag.fill") }
 
-                    FavoritesView(bikeController: bikeController, cartController: cartController, userController: userController)
-                        .tag(2)
-                        .tabItem { Label("Favorites", systemImage: "heart") }
+                FavoritesView(bikeController: bikeController, cartController: cartController, userController: userController)
+                    .tag(2)
+                    .tabItem { Label("Favorites", systemImage: "heart.fill") }
 
-                    MessagesView()
-                        .tag(3)
-                        .tabItem { Label("Messages", systemImage: "message.fill") }
+                CartView(cartController: cartController, bikeController: bikeController)
+                    .tag(3)
+                    .tabItem { Label("Cart", systemImage: "cart.fill") }
 
-                    CartView(bikeController: bikeController, cartController: cartController, orderController: orderController, userController: userController)
-                        .tag(4)
-                        .tabItem { Label("Cart", systemImage: "cart") }
-
-                    SettingsView(userController: userController)
-                        .tag(5)
-                        .tabItem { Label("Settings", systemImage: "gearshape") }
-
-                    ProfileView(
-                        userController: userController,
-                        orderController: orderController,
-                        onLogout: {
-                            userController.logout()
-                            currentTab = 0
-                        },
-                        onEditProfile: {
-                            currentTab = 6
-                        },
-                        onOpenOrders: {
-                            currentTab = 6
-                        },
-                        onOpenFavorites: {
-                            currentTab = 2
-                        }
-                    )
-                    .tag(6)
-                    .tabItem { Label("Profile", systemImage: "person") }
-=======
-            
-            ModelsView()
-                .tabItem {
-                    Label("Models", systemImage: "bicycle")
-                }
-            
-            CartView()
-                .tabItem {
-                    Label("Cart", systemImage: "cart.fill")
->>>>>>> parent of 65bfd55 (IverAbanzaFinalExam)
-                }
+                SettingsView(userController: userController)
+                    .tag(4)
+                    .tabItem { Label("Settings", systemImage: "gearshape.fill") }
+            }
+            .accentColor(Color(red: 0.07, green: 0.11, blue: 0.21))
+        } else {
+            LoginView(
+                userController: userController,
+                onLoginSuccess: {
+                    userController.completeOnboarding()
+                },
+                onCreateAccount: {}
+            )
         }
     }
 }

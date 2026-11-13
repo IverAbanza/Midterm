@@ -1,168 +1,120 @@
 import SwiftUI
 
 struct CartView: View {
-    
-    @State private var quantity = 1
-    
-    let selectedBike = sampleBikes[0]
-    
-    var totalPrice: Double {
-        selectedBike.price * Double(quantity)
-    }
-    
+    @ObservedObject var cartController: CartController
+    @ObservedObject var bikeController: BikeController
+
     var body: some View {
         NavigationStack {
-<<<<<<< HEAD
-            Group {
-                if cartController.items.isEmpty {
-                    EmptyStateView(title: "Your cart is empty", message: "Add a bike to begin your ride.", systemImage: "cart")
-                } else {
-                    ScrollView {
-                        VStack(spacing: 16) {
-                            ForEach(cartController.items, id: \.id) { item in
-                                if let bike = bikeController.bikes.first(where: { $0.id == item.bikeId }) {
-                                    HStack(spacing: 12) {
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 14)
-                                                .fill(bike.accent.opacity(0.12))
-                                                .frame(width: 72, height: 72)
-                                            Image(systemName: "bicycle")
-                                                .font(.system(size: 28, weight: .bold))
-                                                .foregroundStyle(bike.accent)
-                                        }
-=======
-            ScrollView {
-                VStack(spacing: 20) {
->>>>>>> parent of 65bfd55 (IverAbanzaFinalExam)
+            if cartController.items.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "cart.fill")
+                        .font(.system(size: 54, weight: .bold))
+                        .foregroundStyle(.secondary)
 
-                    HStack(spacing: 15) {
-                        
-                        Image(systemName: "bicycle")
-                            .font(.system(size: 45))
-                            .frame(width: 85, height: 85)
-                            .background(Color.gray.opacity(0.12))
-                            .clipShape(
-                                RoundedRectangle(cornerRadius: 15)
-                            )
-                        
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(selectedBike.name)
-                                .font(.headline)
-                            
-                            Text(selectedBike.type)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                            
-                            Text("₱\(Int(selectedBike.price))")
-                                .fontWeight(.bold)
-                        }
-                        
-                        Spacer()
-                    }
-                    .padding()
-                    .background(.thinMaterial)
-                    .clipShape(
-                        RoundedRectangle(cornerRadius: 18)
-                    )
+                    Text("Your cart is empty")
+                        .font(.system(size: 22, weight: .bold))
 
-                    HStack {
-                        Text("Quantity")
-                            .fontWeight(.medium)
-                        
-                        Spacer()
-                        
-                        Button {
-                            if quantity > 1 {
-                                quantity -= 1
-                            }
-                        } label: {
-                            Image(systemName: "minus")
-                                .frame(width: 35, height: 35)
-                                .background(Color.gray.opacity(0.15))
-                                .clipShape(Circle())
-                        }
-                        
-                        Text("\(quantity)")
-                            .fontWeight(.bold)
-                            .frame(width: 30)
-                        
-                        Button {
-                            quantity += 1
-                        } label: {
-                            Image(systemName: "plus")
-                                .frame(width: 35, height: 35)
-                                .background(Color.gray.opacity(0.15))
-                                .clipShape(Circle())
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    Divider()
-
-                    VStack(spacing: 15) {
-                        Text("Order Summary")
-                            .font(.title3)
-                            .fontWeight(.bold)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        HStack {
-                            Text("Subtotal")
-                            
-                            Spacer()
-                            
-                            Text("₱\(Int(totalPrice))")
-                        }
-                        
-                        HStack {
-                            Text("Delivery")
-                            
-                            Spacer()
-                            
-                            Text("FREE")
-                                .fontWeight(.medium)
-                        }
-                        
-                        Divider()
-                        
-                        HStack {
-                            Text("Total")
-                                .font(.title3)
-                                .fontWeight(.bold)
-                            
-                            Spacer()
-                            
-                            Text("₱\(Int(totalPrice))")
-                                .font(.title3)
-                                .fontWeight(.bold)
-                        }
-                    }
-                    .padding()
-                    .background(Color.gray.opacity(0.08))
-                    .clipShape(
-                        RoundedRectangle(cornerRadius: 18)
-                    )
-
-                    Button {
-                        print("Checkout selected")
-                    } label: {
-                        Text("Proceed to Checkout")
-                            .fontWeight(.bold)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .foregroundStyle(.white)
-                            .background(Color.black)
-                            .clipShape(
-                                RoundedRectangle(cornerRadius: 14)
-                            )
-                    }
+                    Text("Add a bike to begin your next ride.")
+                        .foregroundStyle(.secondary)
                 }
                 .padding()
+                .navigationTitle("Cart")
+            } else {
+                ScrollView {
+                    VStack(spacing: 16) {
+                        ForEach(cartController.items, id: \.id) { item in
+                            if let bike = bikeController.bikes.first(where: { $0.id == item.bikeId }) {
+                                HStack(spacing: 14) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .fill(bike.accent.opacity(0.16))
+                                            .frame(width: 76, height: 76)
+                                        Image(systemName: "bicycle")
+                                            .font(.system(size: 30, weight: .bold))
+                                            .foregroundStyle(bike.accent)
+                                    }
+
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(bike.name)
+                                            .font(.system(size: 16, weight: .semibold))
+                                        Text("\(item.quantity) item(s)")
+                                            .font(.system(size: 12))
+                                            .foregroundStyle(.secondary)
+                                    }
+
+                                    Spacer()
+
+                                    VStack(alignment: .trailing, spacing: 4) {
+                                        Text("₱\(Int(bike.price * Double(item.quantity)))")
+                                            .font(.system(size: 15, weight: .bold))
+                                        Button(role: .destructive) {
+                                            cartController.remove(bikeId: bike.id)
+                                        } label: {
+                                            Text("Remove")
+                                                .font(.system(size: 11, weight: .semibold))
+                                        }
+                                    }
+                                }
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .clipShape(RoundedRectangle(cornerRadius: 18))
+                            }
+                        }
+
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Summary")
+                                .font(.system(size: 20, weight: .bold))
+
+                            HStack {
+                                Text("Subtotal")
+                                Spacer()
+                                Text("₱\(Int(cartController.subtotal(for: bikeController.bikes)))")
+                                    .fontWeight(.semibold)
+                            }
+
+                            HStack {
+                                Text("Delivery")
+                                Spacer()
+                                Text("Free")
+                                    .fontWeight(.semibold)
+                            }
+
+                            Divider()
+
+                            HStack {
+                                Text("Total")
+                                    .font(.system(size: 18, weight: .bold))
+                                Spacer()
+                                Text("₱\(Int(cartController.total(for: bikeController.bikes)))")
+                                    .font(.system(size: 18, weight: .bold))
+                            }
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
+
+                        Button {
+                            print("Checkout tapped")
+                        } label: {
+                            Text("Proceed to Checkout")
+                                .font(.system(size: 16, weight: .bold))
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .foregroundStyle(.white)
+                                .background(Color(red: 0.07, green: 0.11, blue: 0.21))
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                        }
+                    }
+                    .padding()
+                }
+                .navigationTitle("Cart")
             }
-            .navigationTitle("Cart")
         }
     }
 }
 
 #Preview {
-    CartView()
+    CartView(cartController: CartController(), bikeController: BikeController())
 }

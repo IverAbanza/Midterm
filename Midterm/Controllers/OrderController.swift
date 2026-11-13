@@ -26,6 +26,10 @@ final class OrderController: ObservableObject {
         orders.filter { $0.status != "Cancelled" }.count
     }
 
+    func statusOptions() -> [String] {
+        ["Pending", "Processing", "Shipped", "Completed", "Cancelled"]
+    }
+
     func createOrder(from cart: [CartItem], bikes: [Bike], user: User, address: String, paymentMethod: String) -> Order {
         let items = cart.compactMap { cartItem -> OrderItem? in
             guard let bike = bikes.first(where: { $0.id == cartItem.bikeId }) else { return nil }
