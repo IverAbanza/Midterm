@@ -208,62 +208,68 @@ struct AdminDashboardView: View {
             }
             .pickerStyle(.segmented)
 
-            List(filteredOrders, id: \.id) { order in
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text(order.id)
-                            .font(.system(size: 15, weight: .bold))
-                        Spacer()
-                        Text(order.status)
-                            .font(.system(size: 11, weight: .bold))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(statusColor(for: order.status).opacity(0.15))
-                            .foregroundStyle(statusColor(for: order.status))
-                            .clipShape(Capsule())
-                    }
-                    Text(order.customerName)
-                        .foregroundStyle(.secondary)
-                    Text("Items: \(order.items.count) • Total: $\(Int(order.total))")
-                        .font(.system(size: 12, weight: .medium))
+            ScrollView {
+                VStack(spacing: 12) {
+                    ForEach(filteredOrders, id: \.id) { order in
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text(order.id)
+                                    .font(.system(size: 15, weight: .bold))
+                                Spacer()
+                                Text(order.status)
+                                    .font(.system(size: 11, weight: .bold))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(statusColor(for: order.status).opacity(0.15))
+                                    .foregroundStyle(statusColor(for: order.status))
+                                    .clipShape(Capsule())
+                            }
+                            Text(order.customerName)
+                                .foregroundStyle(.secondary)
+                            Text("Items: \(order.items.count) • Total: $\(Int(order.total))")
+                                .font(.system(size: 12, weight: .medium))
 
-                    Menu {
-                        ForEach(orderController.statusOptions(), id: \.self) { status in
-                            Button(status) {
-                                _ = orderController.updateStatus(orderId: order.id, to: status)
+                            Menu {
+                                ForEach(orderController.statusOptions(), id: \.self) { status in
+                                    Button(status) {
+                                        _ = orderController.updateStatus(orderId: order.id, to: status)
+                                    }
+                                }
+                            } label: {
+                                Label("Update status", systemImage: "arrow.triangle.2.circlepath")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(Color(.systemGray5))
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
                             }
                         }
-                    } label: {
-                        Label("Update status", systemImage: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 12, weight: .semibold))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color(.systemGray5))
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .padding(.vertical, 4)
                     }
                 }
-                .padding(.vertical, 4)
             }
-            .listStyle(.plain)
         }
     }
 
     private var customersView: some View {
-        List(userController.registeredCustomers(), id: \.id) { customer in
-            VStack(alignment: .leading, spacing: 6) {
-                Text(customer.fullName)
-                    .font(.system(size: 16, weight: .semibold))
-                Text(customer.email)
-                    .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
-                Text(customer.phone.isEmpty ? "No phone" : customer.phone)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+        ScrollView {
+            VStack(spacing: 10) {
+                ForEach(userController.registeredCustomers(), id: \.id) { customer in
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(customer.fullName)
+                            .font(.system(size: 16, weight: .semibold))
+                        Text(customer.email)
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                        Text(customer.phone.isEmpty ? "No phone" : customer.phone)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                }
             }
-            .padding(.vertical, 4)
         }
-        .listStyle(.plain)
     }
 
     private func openNewBikeForm() {
