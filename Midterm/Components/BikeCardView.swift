@@ -9,7 +9,7 @@ struct BikeCardView: View {
                 .font(.system(size: 42, weight: .semibold))
                 .frame(width: 82, height: 82)
                 .foregroundStyle(.white)
-                .background(bike.accentColor)
+                .background(bike.accent)
                 .clipShape(RoundedRectangle(cornerRadius: 18))
 
             VStack(alignment: .leading, spacing: 5) {

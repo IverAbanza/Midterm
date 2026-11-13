@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Combine
 
 struct Bike: Identifiable, Codable, Hashable {
     let id: UUID

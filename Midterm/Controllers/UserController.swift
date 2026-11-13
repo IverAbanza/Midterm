@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 final class UserController: ObservableObject {
     @Published var currentUser: User?

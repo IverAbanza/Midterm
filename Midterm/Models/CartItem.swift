@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 struct CartItem: Identifiable, Codable, Hashable {
     let id: UUID
