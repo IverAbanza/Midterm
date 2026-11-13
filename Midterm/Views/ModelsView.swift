@@ -1,15 +1,41 @@
 import SwiftUI
 
 struct ModelsView: View {
-    @ObservedObject var bikeController: BikeController
-    @ObservedObject var cartController: CartController
-    @ObservedObject var userController: UserController
-
+    let bikes = sampleBikes
+    
+    @State private var isLoading = true
+    
     var body: some View {
-        ShopView(bikeController: bikeController, cartController: cartController, userController: userController)
+        NavigationStack {
+            Group {
+                if isLoading {
+                    VStack(spacing: 12) {
+                        ProgressView()
+                            .scaleEffect(1.2)
+                        
+                        Text("Loading bike models...")
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            ForEach(bikes) { bike in
+                                BikeCardView(bike: bike)
+                            }
+                        }
+                        .padding()
+                    }
+                }
+            }
+            .navigationTitle("Bike Models")
+            .task {
+                try? await Task.sleep(for: .seconds(1))
+                isLoading = false
+            }
+        }
     }
 }
 
 #Preview {
-    ModelsView(bikeController: BikeController(), cartController: CartController(), userController: UserController())
+    ModelsView()
 }

@@ -1,16 +1,18 @@
 import SwiftUI
 
 struct CartView: View {
-    @ObservedObject var bikeController: BikeController
-    @ObservedObject var cartController: CartController
-    @ObservedObject var orderController: OrderController
-    @ObservedObject var userController: UserController
-
-    @State private var showCheckout = false
-    @State private var completedOrder: Order?
-
+    
+    @State private var quantity = 1
+    
+    let selectedBike = sampleBikes[0]
+    
+    var totalPrice: Double {
+        selectedBike.price * Double(quantity)
+    }
+    
     var body: some View {
         NavigationStack {
+<<<<<<< HEAD
             Group {
                 if cartController.items.isEmpty {
                     EmptyStateView(title: "Your cart is empty", message: "Add a bike to begin your ride.", systemImage: "cart")
@@ -28,104 +30,139 @@ struct CartView: View {
                                                 .font(.system(size: 28, weight: .bold))
                                                 .foregroundStyle(bike.accent)
                                         }
+=======
+            ScrollView {
+                VStack(spacing: 20) {
+>>>>>>> parent of 65bfd55 (IverAbanzaFinalExam)
 
-                                        VStack(alignment: .leading) {
-                                            Text(bike.name)
-                                                .font(.system(size: 16, weight: .bold))
-                                            Text(bike.type)
-                                                .foregroundStyle(.secondary)
-                                            Text("$\(Int(bike.price))")
-                                                .fontWeight(.bold)
-                                        }
-
-                                        Spacer()
-
-                                        HStack(spacing: 8) {
-                                            Button(action: { cartController.updateQuantity(bikeId: bike.id, delta: -1) }) {
-                                                Image(systemName: "minus")
-                                                    .frame(width: 28, height: 28)
-                                                    .background(Color(.systemGray6))
-                                                    .clipShape(Circle())
-                                            }
-
-                                            Text("\(item.quantity)")
-                                                .font(.system(size: 16, weight: .bold))
-
-                                            Button(action: { cartController.updateQuantity(bikeId: bike.id, delta: 1) }) {
-                                                Image(systemName: "plus")
-                                                    .frame(width: 28, height: 28)
-                                                    .background(Color(.systemGray6))
-                                                    .clipShape(Circle())
-                                            }
-                                        }
-                                    }
-                                    .padding()
-                                    .background(Color.white)
-                                    .clipShape(RoundedRectangle(cornerRadius: 18))
-                                    .shadow(color: .black.opacity(0.06), radius: 5, x: 0, y: 2)
-                                }
-                            }
-
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Order summary")
-                                    .font(.system(size: 20, weight: .bold))
-
-                                HStack { Text("Subtotal"); Spacer(); Text("$\(Int(cartController.subtotal(for: bikeController.bikes)))") }
-                                HStack { Text("Shipping"); Spacer(); Text("Free") }
-                                Divider()
-                                HStack { Text("Total"); Spacer(); Text("$\(Int(cartController.subtotal(for: bikeController.bikes)))").fontWeight(.bold) }
-                            }
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
-
-                            Button(action: { showCheckout = true }) {
-                                Text("Proceed to Checkout")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                                    .background(Color(red: 0.07, green: 0.11, blue: 0.21))
-                                    .foregroundStyle(.white)
-                                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                            }
+                    HStack(spacing: 15) {
+                        
+                        Image(systemName: "bicycle")
+                            .font(.system(size: 45))
+                            .frame(width: 85, height: 85)
+                            .background(Color.gray.opacity(0.12))
+                            .clipShape(
+                                RoundedRectangle(cornerRadius: 15)
+                            )
+                        
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(selectedBike.name)
+                                .font(.headline)
+                            
+                            Text(selectedBike.type)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            
+                            Text("₱\(Int(selectedBike.price))")
+                                .fontWeight(.bold)
                         }
-                        .padding(20)
+                        
+                        Spacer()
+                    }
+                    .padding()
+                    .background(.thinMaterial)
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 18)
+                    )
+
+                    HStack {
+                        Text("Quantity")
+                            .fontWeight(.medium)
+                        
+                        Spacer()
+                        
+                        Button {
+                            if quantity > 1 {
+                                quantity -= 1
+                            }
+                        } label: {
+                            Image(systemName: "minus")
+                                .frame(width: 35, height: 35)
+                                .background(Color.gray.opacity(0.15))
+                                .clipShape(Circle())
+                        }
+                        
+                        Text("\(quantity)")
+                            .fontWeight(.bold)
+                            .frame(width: 30)
+                        
+                        Button {
+                            quantity += 1
+                        } label: {
+                            Image(systemName: "plus")
+                                .frame(width: 35, height: 35)
+                                .background(Color.gray.opacity(0.15))
+                                .clipShape(Circle())
+                        }
+                    }
+                    .padding(.horizontal)
+                    
+                    Divider()
+
+                    VStack(spacing: 15) {
+                        Text("Order Summary")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        HStack {
+                            Text("Subtotal")
+                            
+                            Spacer()
+                            
+                            Text("₱\(Int(totalPrice))")
+                        }
+                        
+                        HStack {
+                            Text("Delivery")
+                            
+                            Spacer()
+                            
+                            Text("FREE")
+                                .fontWeight(.medium)
+                        }
+                        
+                        Divider()
+                        
+                        HStack {
+                            Text("Total")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                            
+                            Spacer()
+                            
+                            Text("₱\(Int(totalPrice))")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                        }
+                    }
+                    .padding()
+                    .background(Color.gray.opacity(0.08))
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 18)
+                    )
+
+                    Button {
+                        print("Checkout selected")
+                    } label: {
+                        Text("Proceed to Checkout")
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .foregroundStyle(.white)
+                            .background(Color.black)
+                            .clipShape(
+                                RoundedRectangle(cornerRadius: 14)
+                            )
                     }
                 }
+                .padding()
             }
             .navigationTitle("Cart")
-            .navigationDestination(isPresented: $showCheckout) {
-                CheckoutView(
-                    cartController: cartController,
-                    bikeController: bikeController,
-                    orderController: orderController,
-                    userController: userController,
-                    onOrderPlaced: { order in
-                        completedOrder = order
-                        showCheckout = false
-                    }
-                )
-            }
-            .navigationDestination(item: $completedOrder) { order in
-                OrderConfirmationView(
-                    order: order,
-                    onContinueShopping: {
-                        completedOrder = nil
-                    },
-                    onViewOrders: {
-                        completedOrder = nil
-                    }
-                )
-            }
         }
     }
 }
 
 #Preview {
-    CartView(
-        bikeController: BikeController(),
-        cartController: CartController(),
-        orderController: OrderController(),
-        userController: UserController()
-    )
+    CartView()
 }

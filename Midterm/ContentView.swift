@@ -1,47 +1,14 @@
 import SwiftUI
 
 struct ContentView: View {
-    @ObservedObject var bikeController: BikeController
-    @ObservedObject var cartController: CartController
-    @ObservedObject var userController: UserController
-    @ObservedObject var orderController: OrderController
-
-    @State private var showSplash = true
-    @State private var currentTab = 0
-    @State private var isShowingSignup = false
-
     var body: some View {
-        Group {
-            if showSplash {
-                SplashView()
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
-                            showSplash = false
-                        }
-                    }
-            } else if !userController.onboardingCompleted {
-                OnboardingView(
-                    onComplete: {
-                        userController.completeOnboarding()
-                    },
-                    onSkip: {
-                        userController.completeOnboarding()
-                    }
-                )
-            } else if !userController.isLoggedIn {
-                if isShowingSignup {
-                    SignUpView(userController: userController, onBack: {
-                        isShowingSignup = false
-                    }, onSignedUp: {
-                        userController.completeOnboarding()
-                    })
-                } else {
-                    LoginView(userController: userController, onLoginSuccess: {
-                        userController.completeOnboarding()
-                    }, onCreateAccount: {
-                        isShowingSignup = true
-                    })
+        TabView {
+            
+            HomeView()
+                .tabItem {
+                    Label("Home", systemImage: "house.fill")
                 }
+<<<<<<< HEAD
             } else if userController.isAdmin {
                 AdminDashboardView(
                     bikeController: bikeController,
@@ -97,18 +64,22 @@ struct ContentView: View {
                     )
                     .tag(6)
                     .tabItem { Label("Profile", systemImage: "person") }
+=======
+            
+            ModelsView()
+                .tabItem {
+                    Label("Models", systemImage: "bicycle")
                 }
-                .accentColor(Color(red: 0.07, green: 0.11, blue: 0.21))
-            }
+            
+            CartView()
+                .tabItem {
+                    Label("Cart", systemImage: "cart.fill")
+>>>>>>> parent of 65bfd55 (IverAbanzaFinalExam)
+                }
         }
     }
 }
 
 #Preview {
-    ContentView(
-        bikeController: BikeController(),
-        cartController: CartController(),
-        userController: UserController(),
-        orderController: OrderController()
-    )
+    ContentView()
 }
