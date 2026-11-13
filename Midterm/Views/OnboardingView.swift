@@ -55,7 +55,7 @@ struct OnboardingView: View {
                 }
             }
 
-            PrimaryButton(title: currentPage == pages.count - 1 ? "Get Started" : "Next") {
+            PrimaryButton(title: currentPage == pages.count - 1 ? "Get Started" : "Next", icon: currentPage == pages.count - 1 ? "arrow.right" : "chevron.right") {
                 if currentPage < pages.count - 1 {
                     currentPage += 1
                 } else {
