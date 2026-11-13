@@ -353,7 +353,7 @@ struct AdminDashboardView: View {
             stock: parsedStock
         )
 
-        if let editingBike {
+        if editingBike != nil {
             bikeController.updateBike(bike)
         } else {
             bikeController.addBike(bike)
