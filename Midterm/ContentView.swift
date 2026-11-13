@@ -7,6 +7,7 @@ struct ContentView: View {
     @StateObject private var orderController = OrderController()
 
     @State private var currentTab = 0
+    @State private var isShowingSignUp = false
 
     var body: some View {
         if userController.isLoggedIn && userController.isAdmin {
@@ -41,13 +42,26 @@ struct ContentView: View {
                     .tabItem { Label("Settings", systemImage: "gearshape.fill") }
             }
             .accentColor(Color(red: 0.07, green: 0.11, blue: 0.21))
+        } else if isShowingSignUp {
+            SignUpView(
+                userController: userController,
+                onBackToLogin: {
+                    isShowingSignUp = false
+                },
+                onSignUpSuccess: {
+                    isShowingSignUp = false
+                    userController.completeOnboarding()
+                }
+            )
         } else {
             LoginView(
                 userController: userController,
                 onLoginSuccess: {
                     userController.completeOnboarding()
                 },
-                onCreateAccount: {}
+                onCreateAccount: {
+                    isShowingSignUp = true
+                }
             )
         }
     }
