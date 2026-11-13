@@ -226,17 +226,22 @@ struct AdminDashboardView: View {
                         .foregroundStyle(.secondary)
                     Text("Items: \(order.items.count) • Total: $\(Int(order.total))")
                         .font(.system(size: 12, weight: .medium))
-                    Picker("Update status", selection: Binding(
-                        get: { order.status },
-                        set: { newValue in
-                            _ = orderController.updateStatus(orderId: order.id, to: newValue)
-                        }
-                    )) {
+
+                    Menu {
                         ForEach(orderController.statusOptions(), id: \ .self) { status in
-                            Text(status).tag(status)
+                            Button(status) {
+                                _ = orderController.updateStatus(orderId: order.id, to: status)
+                            }
                         }
+                    } label: {
+                        Label("Update status", systemImage: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 12, weight: .semibold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.systemGray5))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
-                    .pickerStyle(.menu)
                 }
                 .padding(.vertical, 4)
             }
