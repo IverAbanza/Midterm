@@ -42,6 +42,16 @@ struct ContentView: View {
                         isShowingSignup = true
                     })
                 }
+            } else if userController.isAdmin {
+                AdminDashboardView(
+                    bikeController: bikeController,
+                    orderController: orderController,
+                    userController: userController,
+                    onLogout: {
+                        userController.logout()
+                        currentTab = 0
+                    }
+                )
             } else {
                 TabView(selection: $currentTab) {
                     HomeView(bikeController: bikeController, cartController: cartController, userController: userController)
@@ -56,9 +66,17 @@ struct ContentView: View {
                         .tag(2)
                         .tabItem { Label("Favorites", systemImage: "heart") }
 
-                    CartView(bikeController: bikeController, cartController: cartController, orderController: orderController, userController: userController)
+                    MessagesView()
                         .tag(3)
+                        .tabItem { Label("Messages", systemImage: "message.fill") }
+
+                    CartView(bikeController: bikeController, cartController: cartController, orderController: orderController, userController: userController)
+                        .tag(4)
                         .tabItem { Label("Cart", systemImage: "cart") }
+
+                    SettingsView(userController: userController)
+                        .tag(5)
+                        .tabItem { Label("Settings", systemImage: "gearshape") }
 
                     ProfileView(
                         userController: userController,
@@ -68,16 +86,16 @@ struct ContentView: View {
                             currentTab = 0
                         },
                         onEditProfile: {
-                            currentTab = 4
+                            currentTab = 6
                         },
                         onOpenOrders: {
-                            currentTab = 4
+                            currentTab = 6
                         },
                         onOpenFavorites: {
                             currentTab = 2
                         }
                     )
-                    .tag(4)
+                    .tag(6)
                     .tabItem { Label("Profile", systemImage: "person") }
                 }
                 .accentColor(Color(red: 0.07, green: 0.11, blue: 0.21))

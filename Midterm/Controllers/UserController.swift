@@ -6,9 +6,15 @@ final class UserController: ObservableObject {
     @Published var isLoggedIn: Bool
     @Published var onboardingCompleted: Bool
 
+    var isAdmin: Bool {
+        currentUser?.isAdmin == true
+    }
+
     private let userKey = "bikeStore.user"
     private let loginKey = "bikeStore.loggedin"
     private let onboardingKey = "bikeStore.onboarding"
+    private let adminEmail = "admin@bikestore.com"
+    private let adminPassword = "Admin123!"
 
     init() {
         self.currentUser = UserController.loadSavedUser()
@@ -41,7 +47,7 @@ final class UserController: ObservableObject {
             return (false, "Passwords do not match.")
         }
 
-        let user = User(id: UUID(), fullName: fullName, email: email, phone: "", password: password)
+        let user = User(id: UUID(), fullName: fullName, email: email, phone: "", password: password, role: "customer")
         currentUser = user
         isLoggedIn = true
         saveUser(user)
@@ -54,7 +60,25 @@ final class UserController: ObservableObject {
             return (false, "Email and password are required.")
         }
 
-        if let savedUser = Self.loadSavedUser(), savedUser.email.lowercased() == email.lowercased() && savedUser.password == password {
+        let normalizedEmail = email.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if normalizedEmail == adminEmail.lowercased() && password == adminPassword {
+            let adminUser = User(
+                id: UUID(),
+                fullName: "BikeStore Admin",
+                email: adminEmail,
+                phone: "+1 (800) 555-0199",
+                password: adminPassword,
+                role: "admin"
+            )
+            currentUser = adminUser
+            isLoggedIn = true
+            saveUser(adminUser)
+            UserDefaults.standard.set(true, forKey: loginKey)
+            return (true, "Admin login successful.")
+        }
+
+        if let savedUser = Self.loadSavedUser(), savedUser.email.lowercased() == normalizedEmail && savedUser.password == password {
             currentUser = savedUser
             isLoggedIn = true
             UserDefaults.standard.set(true, forKey: loginKey)
@@ -77,7 +101,7 @@ final class UserController: ObservableObject {
             return (false, "Full name and email are required.")
         }
 
-        let updated = User(id: user.id, fullName: fullName, email: email, phone: phone, password: user.password)
+        let updated = User(id: user.id, fullName: fullName, email: email, phone: phone, password: user.password, role: user.role)
         currentUser = updated
         saveUser(updated)
         return (true, "Profile updated successfully.")
@@ -86,6 +110,14 @@ final class UserController: ObservableObject {
     func completeOnboarding() {
         onboardingCompleted = true
         UserDefaults.standard.set(true, forKey: onboardingKey)
+    }
+
+    func registeredCustomers() -> [User] {
+        var users: [User] = []
+        if let saved = Self.loadSavedUser() {
+            users.append(saved)
+        }
+        return users.filter { !$0.isAdmin }
     }
 
     private func saveUser(_ user: User) {

@@ -19,6 +19,9 @@ struct LoginView: View {
                 Text("Sign in to continue")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(.secondary)
+                Text("Admin access: admin@bikestore.com / Admin123!")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color(red: 0.07, green: 0.11, blue: 0.21))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 

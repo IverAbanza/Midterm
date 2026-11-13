@@ -16,9 +16,14 @@ struct Bike: Identifiable, Codable, Hashable {
     let sizes: [String]
     let colors: [String]
     let specs: [String: String]
+    let stock: Int
 
     var accent: Color {
         Color(hex: accentColor)
+    }
+
+    var isAvailable: Bool {
+        stock > 0
     }
 }
 
@@ -57,7 +62,8 @@ let sampleBikes: [Bike] = [
             "Gears": "Shimano 105",
             "Wheel": "700c",
             "Weight": "8.2 kg"
-        ]
+        ],
+        stock: 12
     ),
     Bike(
         id: UUID(),
@@ -77,7 +83,8 @@ let sampleBikes: [Bike] = [
             "Gears": "Shimano 105",
             "Wheel": "700c",
             "Weight": "8.6 kg"
-        ]
+        ],
+        stock: 8
     ),
     Bike(
         id: UUID(),
@@ -97,7 +104,8 @@ let sampleBikes: [Bike] = [
             "Gears": "Ultegra",
             "Wheel": "700c",
             "Weight": "7.9 kg"
-        ]
+        ],
+        stock: 5
     ),
     Bike(
         id: UUID(),
@@ -117,7 +125,8 @@ let sampleBikes: [Bike] = [
             "Gears": "Shimano Altus",
             "Wheel": "700c",
             "Weight": "9.6 kg"
-        ]
+        ],
+        stock: 14
     ),
     Bike(
         id: UUID(),
@@ -137,7 +146,8 @@ let sampleBikes: [Bike] = [
             "Gears": "Shimano Deore",
             "Wheel": "29\"",
             "Weight": "12.8 kg"
-        ]
+        ],
+        stock: 6
     ),
     Bike(
         id: UUID(),
@@ -157,6 +167,7 @@ let sampleBikes: [Bike] = [
             "Gears": "XT",
             "Wheel": "29\"",
             "Weight": "12.2 kg"
-        ]
+        ],
+        stock: 7
     )
 ]

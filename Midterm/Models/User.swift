@@ -6,4 +6,9 @@ struct User: Identifiable, Codable, Hashable {
     var email: String
     var phone: String
     var password: String
+    var role: String = "customer"
+
+    var isAdmin: Bool {
+        role.lowercased() == "admin"
+    }
 }
