@@ -21,7 +21,7 @@ struct OnboardingView: View {
             .padding(.horizontal)
 
             TabView(selection: $currentPage) {
-                ForEach(pages.indices, id: \ .self) { index in
+                ForEach(pages.indices, id: \.self) { index in
                     VStack(spacing: 18) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 26)
@@ -48,7 +48,7 @@ struct OnboardingView: View {
             .tabViewStyle(.page(indexDisplayMode: .never))
 
             HStack(spacing: 10) {
-                ForEach(pages.indices, id: \ .self) { index in
+                ForEach(pages.indices, id: \.self) { index in
                     Circle()
                         .fill(index == currentPage ? Color(red: 0.07, green: 0.11, blue: 0.21) : Color.gray.opacity(0.3))
                         .frame(width: 10, height: 10)

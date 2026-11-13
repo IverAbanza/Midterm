@@ -12,7 +12,7 @@ struct OrdersView: View {
                 if orders.isEmpty {
                     EmptyStateView(title: "No orders yet", message: "Your recent orders will appear here.", systemImage: "shippingbox")
                 } else {
-                    ForEach(orders, id: \ .id) { order in
+                    ForEach(orders, id: \.id) { order in
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
                                 Text(order.id)
@@ -30,7 +30,7 @@ struct OrdersView: View {
                             Text(order.createdAt.formatted(date: .abbreviated, time: .shortened))
                                 .foregroundStyle(.secondary)
 
-                            ForEach(order.items, id: \ .id) { item in
+                            ForEach(order.items, id: \.id) { item in
                                 HStack {
                                     Text(item.name)
                                     Spacer()

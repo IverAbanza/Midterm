@@ -21,7 +21,7 @@ struct SearchView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
-                    ForEach(categories, id: \ .self) { item in
+                    ForEach(categories, id: \.self) { item in
                         Button(action: {
                             category = item
                         }) {
@@ -42,7 +42,7 @@ struct SearchView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 14) {
-                        ForEach(filtered, id: \ .id) { bike in
+                        ForEach(filtered, id: \.id) { bike in
                             NavigationLink(destination: BikeDetailView(bike: bike, bikeController: bikeController, cartController: cartController, userController: userController)) {
                                 BikeCard(bike: bike) {
                                     print("Open bike")

@@ -22,7 +22,7 @@ struct ShopView: View {
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 10) {
-                        ForEach(categories, id: \ .self) { category in
+                        ForEach(categories, id: \.self) { category in
                             Button(action: { selectedCategory = category }) {
                                 Text(category)
                                     .font(.system(size: 13, weight: .semibold))
@@ -42,7 +42,7 @@ struct ShopView: View {
                         .font(.system(size: 17, weight: .bold))
                     Spacer()
                     Menu {
-                        ForEach(SortOption.allCases, id: \ .self) { option in
+                        ForEach(SortOption.allCases, id: \.self) { option in
                             Button(option.rawValue) {
                                 selectedSort = option
                             }
@@ -66,7 +66,7 @@ struct ShopView: View {
                 } else {
                     ScrollView {
                         LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 14) {
-                            ForEach(filteredBikes, id: \ .id) { bike in
+                            ForEach(filteredBikes, id: \.id) { bike in
                                 NavigationLink(destination: BikeDetailView(bike: bike, bikeController: bikeController, cartController: cartController, userController: userController)) {
                                     BikeCard(bike: bike) {
                                         cartController.add(bike: bike)

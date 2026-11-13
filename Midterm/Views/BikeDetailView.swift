@@ -65,7 +65,7 @@ struct BikeDetailView: View {
                         .font(.system(size: 18, weight: .bold))
 
                     HStack(spacing: 12) {
-                        ForEach(bike.colors, id: \ .self) { colorName in
+                        ForEach(bike.colors, id: \.self) { colorName in
                             Button(action: { selectedColor = colorName }) {
                                 Text(colorName)
                                     .padding(.horizontal, 12)
@@ -83,7 +83,7 @@ struct BikeDetailView: View {
                         .font(.system(size: 18, weight: .bold))
 
                     HStack(spacing: 10) {
-                        ForEach(bike.sizes, id: \ .self) { size in
+                        ForEach(bike.sizes, id: \.self) { size in
                             Button(action: { selectedSize = size }) {
                                 Text(size)
                                     .frame(width: 52, height: 36)
@@ -100,7 +100,7 @@ struct BikeDetailView: View {
                         .font(.system(size: 18, weight: .bold))
 
                     VStack(spacing: 10) {
-                        ForEach(Array(bike.specs.keys.sorted()), id: \ .self) { key in
+                        ForEach(Array(bike.specs.keys.sorted()), id: \.self) { key in
                             HStack {
                                 Text(key)
                                     .foregroundStyle(.secondary)

@@ -108,7 +108,7 @@ struct AdminDashboardView: View {
                     Text("Recent activity")
                         .font(.system(size: 20, weight: .bold))
 
-                    ForEach(Array(orderController.orders.prefix(4).enumerated()), id: \ .offset) { _, order in
+                    ForEach(Array(orderController.orders.prefix(4).enumerated()), id: \.offset) { _, order in
                         HStack {
                             VStack(alignment: .leading) {
                                 Text(order.customerName)
@@ -151,7 +151,7 @@ struct AdminDashboardView: View {
             HStack {
                 Picker("Filter", selection: $productFilter) {
                     let categories = ["All"] + bikeController.categories()
-                    ForEach(categories, id: \ .self) { category in
+                    ForEach(categories, id: \.self) { category in
                         Text(category).tag(category)
                     }
                 }
@@ -159,7 +159,7 @@ struct AdminDashboardView: View {
                 Spacer()
             }
 
-            List(filteredProducts, id: \ .id) { bike in
+            List(filteredProducts, id: \.id) { bike in
                 HStack(alignment: .center, spacing: 14) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 14)
@@ -202,13 +202,13 @@ struct AdminDashboardView: View {
             SearchBar(text: $orderSearch, placeholder: "Search orders")
 
             Picker("Status", selection: $orderFilter) {
-                ForEach(statusOptions, id: \ .self) { status in
+                ForEach(statusOptions, id: \.self) { status in
                     Text(status).tag(status)
                 }
             }
             .pickerStyle(.segmented)
 
-            List(filteredOrders, id: \ .id) { order in
+            List(filteredOrders, id: \.id) { order in
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text(order.id)
@@ -228,7 +228,7 @@ struct AdminDashboardView: View {
                         .font(.system(size: 12, weight: .medium))
 
                     Menu {
-                        ForEach(orderController.statusOptions(), id: \ .self) { status in
+                        ForEach(orderController.statusOptions(), id: \.self) { status in
                             Button(status) {
                                 _ = orderController.updateStatus(orderId: order.id, to: status)
                             }
@@ -250,7 +250,7 @@ struct AdminDashboardView: View {
     }
 
     private var customersView: some View {
-        List(userController.registeredCustomers(), id: \ .id) { customer in
+        List(userController.registeredCustomers(), id: \.id) { customer in
             VStack(alignment: .leading, spacing: 6) {
                 Text(customer.fullName)
                     .font(.system(size: 16, weight: .semibold))
@@ -297,7 +297,7 @@ struct AdminDashboardView: View {
                     TextField("Name", text: $draftName)
                     TextField("Type", text: $draftType)
                     Picker("Category", selection: $draftCategory) {
-                        ForEach(["Road", "Mountain", "Hybrid", "City"], id: \ .self) { Text($0) }
+                        ForEach(["Road", "Mountain", "Hybrid", "City"], id: \.self) { Text($0) }
                     }
                     TextField("Description", text: $draftDescription, axis: .vertical)
                         .lineLimit(3...6)

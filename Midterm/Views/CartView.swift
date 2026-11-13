@@ -17,7 +17,7 @@ struct CartView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 16) {
-                            ForEach(cartController.items, id: \ .id) { item in
+                            ForEach(cartController.items, id: \.id) { item in
                                 if let bike = bikeController.bikes.first(where: { $0.id == item.bikeId }) {
                                     HStack(spacing: 12) {
                                         ZStack {

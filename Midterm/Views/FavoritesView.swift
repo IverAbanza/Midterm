@@ -20,7 +20,7 @@ struct FavoritesView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 14) {
-                        ForEach(favoriteBikes, id: \ .id) { bike in
+                        ForEach(favoriteBikes, id: \.id) { bike in
                             HStack(spacing: 12) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 16)

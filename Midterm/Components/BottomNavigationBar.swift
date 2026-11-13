@@ -13,7 +13,7 @@ struct BottomNavigationBar: View {
 
     var body: some View {
         HStack {
-            ForEach(items.indices, id: \ .self) { index in
+            ForEach(items.indices, id: \.self) { index in
                 let item = items[index]
                 Button(action: {
                     selection = index
