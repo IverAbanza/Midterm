@@ -98,7 +98,7 @@ struct AdminDashboardView: View {
 
     private var overviewView: some View {
         ScrollView {
-            VStack(spacing: 16) {
+            VStack(spacing: 18) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         MetricCard(title: "Revenue", value: "$\(Int(orderController.totalRevenue))", color: .green)
@@ -112,6 +112,7 @@ struct AdminDashboardView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Operational overview")
                         .font(.system(size: 20, weight: .bold))
+
                     HStack(spacing: 12) {
                         MiniStat(title: "Pending", value: "\(orderController.pendingOrders.count)", color: .orange)
                         MiniStat(title: "Completed", value: "\(orderController.completedOrders.count)", color: .green)
@@ -125,7 +126,7 @@ struct AdminDashboardView: View {
 
                     ForEach(Array(orderController.orders.prefix(4).enumerated()), id: \.offset) { _, order in
                         HStack {
-                            VStack(alignment: .leading) {
+                            VStack(alignment: .leading, spacing: 4) {
                                 Text(order.customerName)
                                     .font(.system(size: 15, weight: .semibold))
                                 Text(order.id)
@@ -133,10 +134,10 @@ struct AdminDashboardView: View {
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            VStack(alignment: .trailing) {
+                            VStack(alignment: .trailing, spacing: 4) {
                                 Text(order.status)
                                     .font(.system(size: 11, weight: .bold))
-                                    .foregroundStyle(order.status == "Completed" ? .green : .orange)
+                                    .foregroundStyle(statusColor(for: order.status))
                                 Text("$\(Int(order.total))")
                                     .font(.system(size: 14, weight: .bold))
                             }

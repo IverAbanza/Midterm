@@ -18,6 +18,19 @@ struct ShopView: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 18) {
+                HStack {
+                    Text("Shop")
+                        .font(.system(size: 30, weight: .heavy))
+                    Spacer()
+                    Button(action: {}) {
+                        Image(systemName: "slider.horizontal.3")
+                            .foregroundStyle(.primary)
+                            .frame(width: 40, height: 40)
+                            .background(Color(.systemGray6))
+                            .clipShape(Circle())
+                    }
+                }
+
                 SearchBar(text: $searchText, placeholder: "Search bikes")
 
                 ScrollView(.horizontal, showsIndicators: false) {

@@ -13,18 +13,23 @@ struct SettingsView: View {
             Form {
                 Section("Account") {
                     HStack {
-                        Label("Name", systemImage: "person.fill")
-                        Spacer()
-                        Text(userController.currentUser?.fullName ?? "BikeStore User")
-                            .foregroundStyle(.secondary)
-                    }
+                        ZStack {
+                            Circle()
+                                .fill(Color(red: 0.07, green: 0.11, blue: 0.21).opacity(0.12))
+                                .frame(width: 42, height: 42)
+                            Image(systemName: "person.fill")
+                                .foregroundStyle(Color(red: 0.07, green: 0.11, blue: 0.21))
+                        }
 
-                    HStack {
-                        Label("Email", systemImage: "envelope.fill")
-                        Spacer()
-                        Text(userController.currentUser?.email ?? "guest@bikestore.com")
-                            .foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(userController.currentUser?.fullName ?? "BikeStore User")
+                                .font(.system(size: 16, weight: .semibold))
+                            Text(userController.currentUser?.email ?? "guest@bikestore.com")
+                                .font(.system(size: 12))
+                                .foregroundStyle(.secondary)
+                        }
                     }
+                    .padding(.vertical, 4)
                 }
 
                 Section("Preferences") {
