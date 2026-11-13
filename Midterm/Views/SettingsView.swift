@@ -34,6 +34,14 @@ struct SettingsView: View {
                     Toggle("Location access", isOn: $locationAccess)
                 }
 
+                Section("Account actions") {
+                    Button(role: .destructive) {
+                        userController.logout()
+                    } label: {
+                        Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
+                    }
+                }
+
                 Section("Support") {
                     Label("Help Center", systemImage: "questionmark.circle")
                     Label("Privacy Policy", systemImage: "shield.fill")

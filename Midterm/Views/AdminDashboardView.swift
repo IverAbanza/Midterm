@@ -12,6 +12,7 @@ struct AdminDashboardView: View {
     @State private var productFilter = "All"
     @State private var orderFilter = "All"
     @State private var showingForm = false
+    private let tabs = ["Overview", "Inventory", "Orders", "Customers"]
     @State private var editingBike: Bike?
     @State private var draftName = ""
     @State private var draftType = "Road Bike"
@@ -43,6 +44,20 @@ struct AdminDashboardView: View {
         NavigationStack {
             VStack(spacing: 18) {
                 header
+
+                HStack(spacing: 8) {
+                    ForEach(Array(tabs.enumerated()), id: \.offset) { index, title in
+                        Button(action: { selectedTab = index }) {
+                            Text(title)
+                                .font(.system(size: 12, weight: selectedTab == index ? .bold : .medium))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .foregroundStyle(selectedTab == index ? .white : .secondary)
+                                .background(selectedTab == index ? Color(red: 0.07, green: 0.11, blue: 0.21) : Color(.systemGray6))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                    }
+                }
 
                 if selectedTab == 0 {
                     overviewView
