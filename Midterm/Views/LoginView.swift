@@ -83,7 +83,7 @@ struct LoginView: View {
                         .toggleStyle(.switch)
                     Spacer()
                     Button("Forgot password?") {
-                        errorMessage = "Password recovery is not available in this demo mode."
+                        errorMessage = "Password recovery is not available in this version."
                     }
                     .foregroundStyle(AppTheme.navy)
                 }

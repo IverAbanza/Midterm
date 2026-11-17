@@ -13,8 +13,6 @@ final class UserController: ObservableObject {
     private let userKey = "bikeStore.user"
     private let loginKey = "bikeStore.loggedin"
     private let onboardingKey = "bikeStore.onboarding"
-    private let adminEmail = "admin@bikestore.com"
-    private let adminPassword = "Admin123!"
 
     init() {
         self.currentUser = UserController.loadSavedUser()
@@ -47,12 +45,16 @@ final class UserController: ObservableObject {
             return (false, "Passwords do not match.")
         }
 
-        let user = User(id: UUID(), fullName: fullName, email: email, phone: "", address: "", password: password, role: "customer")
+        let isFirstAccount = Self.loadSavedUser() == nil
+        let role = isFirstAccount ? "admin" : "customer"
+        let user = User(id: UUID(), fullName: fullName, email: email, phone: "", address: "", password: password, role: role)
+
         currentUser = user
         isLoggedIn = true
         saveUser(user)
         UserDefaults.standard.set(true, forKey: loginKey)
-        return (true, "Account created successfully.")
+
+        return (true, isFirstAccount ? "Admin account created successfully." : "Account created successfully.")
     }
 
     func signIn(email: String, password: String) -> (Bool, String) {
@@ -62,28 +64,11 @@ final class UserController: ObservableObject {
 
         let normalizedEmail = email.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if normalizedEmail == adminEmail.lowercased() && password == adminPassword {
-            let adminUser = User(
-                id: UUID(),
-                fullName: "BikeStore Admin",
-                email: adminEmail,
-                phone: "+1 (800) 555-0199",
-                address: "HQ, 24 Bike Avenue",
-                password: adminPassword,
-                role: "admin"
-            )
-            currentUser = adminUser
-            isLoggedIn = true
-            saveUser(adminUser)
-            UserDefaults.standard.set(true, forKey: loginKey)
-            return (true, "Admin login successful.")
-        }
-
         if let savedUser = Self.loadSavedUser(), savedUser.email.lowercased() == normalizedEmail && savedUser.password == password {
             currentUser = savedUser
             isLoggedIn = true
             UserDefaults.standard.set(true, forKey: loginKey)
-            return (true, "Login successful.")
+            return (true, savedUser.isAdmin ? "Admin login successful." : "Login successful.")
         }
 
         return (false, "Invalid email or password.")

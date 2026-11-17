@@ -9,11 +9,19 @@ struct AdminDashboardView: View {
     @State private var selectedTab = 0
     @State private var productSearch = ""
     @State private var orderSearch = ""
+    @State private var customerSearch = ""
     @State private var productFilter = "All"
     @State private var stockFilter = "All"
     @State private var orderFilter = "All"
     @State private var showingForm = false
-    @State private var selectedQuickAction: String? = nil
+    @State private var productFormError = ""
+    @State private var showProductFormError = false
+    @State private var showRevenueDetail = false
+    @State private var selectedOrderDetail: Order? = nil
+    @State private var selectedProductDetail: Bike? = nil
+    @State private var selectedCustomerDetail: User? = nil
+    @State private var deleteTargetId: UUID? = nil
+    @State private var showDeleteConfirm = false
 
     private let tabs = ["Overview", "Inventory", "Orders", "Customers"]
     @State private var editingBike: Bike?
@@ -54,6 +62,12 @@ struct AdminDashboardView: View {
         }
     }
 
+    var filteredCustomers: [User] {
+        userController.registeredCustomers().filter { customer in
+            customerSearch.isEmpty || customer.fullName.lowercased().contains(customerSearch.lowercased()) || customer.email.lowercased().contains(customerSearch.lowercased())
+        }
+    }
+
     var revenueTrendData: [(label: String, value: Double)] {
         let calendar = Calendar.current
         let today = Date()
@@ -85,7 +99,7 @@ struct AdminDashboardView: View {
 
                 HStack(spacing: 8) {
                     ForEach(Array(tabs.enumerated()), id: \.offset) { index, title in
-                        Button(action: { selectedTab = index; selectedQuickAction = nil }) {
+                        Button(action: { selectedTab = index }) {
                             Text(title)
                                 .font(.system(size: 12, weight: selectedTab == index ? .bold : .semibold))
                                 .frame(maxWidth: .infinity)
@@ -115,6 +129,39 @@ struct AdminDashboardView: View {
             .background(Color(.systemGroupedBackground))
             .sheet(isPresented: $showingForm) {
                 productFormSheet
+            }
+            .sheet(isPresented: $showRevenueDetail) {
+                RevenueDetailSheet(orders: orderController.orders)
+            }
+            .sheet(item: $selectedOrderDetail) { order in
+                OrderDetailSheet(order: order, onStatusChange: { newStatus in
+                    _ = orderController.updateStatus(orderId: order.id, to: newStatus)
+                })
+            }
+            .sheet(item: $selectedProductDetail) { bike in
+                ProductDetailSheet(bike: bike, onEdit: { openEditForm(for: bike) }, onDelete: {
+                    deleteTargetId = bike.id
+                    showDeleteConfirm = true
+                })
+            }
+            .sheet(item: $selectedCustomerDetail) { customer in
+                CustomerDetailSheet(customer: customer, orders: orderController.orders.filter { $0.customerName == customer.fullName })
+            }
+            .alert("Delete product", isPresented: $showDeleteConfirm) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete", role: .destructive) {
+                    if let id = deleteTargetId {
+                        bikeController.deleteBike(id: id)
+                        deleteTargetId = nil
+                    }
+                }
+            } message: {
+                Text("This will permanently remove the selected bike from inventory.")
+            }
+            .alert("Product validation", isPresented: $showProductFormError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(productFormError)
             }
         }
     }
@@ -158,8 +205,25 @@ struct AdminDashboardView: View {
         ScrollView {
             VStack(spacing: 16) {
                 HStack(spacing: 12) {
-                    StatCard(title: "Total Revenue", value: formatCurrency(orderController.totalRevenue), icon: "dollarsign.circle.fill", color: .blue)
-                    StatCard(title: "Total Orders", value: "\(orderController.totalSales)", icon: "bag.fill", color: .green)
+                    StatCard(
+                        title: "Total Revenue",
+                        value: formatCurrency(orderController.totalRevenue),
+                        icon: "dollarsign.circle.fill",
+                        color: .blue,
+                        action: {
+                            showRevenueDetail = true
+                        }
+                    )
+                    StatCard(
+                        title: "Total Orders",
+                        value: "\(orderController.totalSales)",
+                        icon: "bag.fill",
+                        color: .green,
+                        action: {
+                            selectedTab = 2
+                            orderFilter = "All"
+                        }
+                    )
                 }
 
                 VStack(alignment: .leading, spacing: 12) {
@@ -348,15 +412,20 @@ struct AdminDashboardView: View {
 
     private var customersView: some View {
         VStack(spacing: 12) {
-            SearchBar(text: $orderSearch, placeholder: "Search customers")
+            SearchBar(text: $customerSearch, placeholder: "Search customers")
 
-            if userController.registeredCustomers().isEmpty {
+            if filteredCustomers.isEmpty {
                 EmptyStateView(title: "No customers yet", message: "Customer profiles will appear here.", systemImage: "person.2.fill")
             } else {
                 ScrollView {
                     VStack(spacing: 12) {
-                        ForEach(userController.registeredCustomers(), id: \.id) { customer in
-                            CustomerCard(customer: customer, orders: orderController.orders.filter { $0.customerName == customer.fullName })
+                        ForEach(filteredCustomers, id: \.id) { customer in
+                            Button(action: {
+                                selectedCustomerDetail = customer
+                            }) {
+                                CustomerCard(customer: customer, orders: orderController.orders.filter { $0.customerName == customer.fullName })
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
@@ -424,14 +493,32 @@ struct AdminDashboardView: View {
     }
 
     private func saveProduct() {
-        guard !draftName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        guard let parsedPrice = Double(draftPrice), parsedPrice > 0 else { return }
-        guard let parsedStock = Int(draftStock), parsedStock >= 0 else { return }
+        let cleanedName = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanedPrice = draftPrice.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanedStock = draftStock.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !cleanedName.isEmpty else {
+            productFormError = "Product name is required."
+            showProductFormError = true
+            return
+        }
+
+        guard let parsedPrice = Double(cleanedPrice), parsedPrice > 0 else {
+            productFormError = "Price must be a positive number."
+            showProductFormError = true
+            return
+        }
+
+        guard let parsedStock = Int(cleanedStock), parsedStock >= 0 else {
+            productFormError = "Stock must be a valid non-negative number."
+            showProductFormError = true
+            return
+        }
 
         let bike = Bike(
             id: editingBike?.id ?? UUID(),
-            name: draftName,
-            type: draftType,
+            name: cleanedName,
+            type: draftType.isEmpty ? "Road Bike" : draftType,
             category: draftCategory,
             description: draftDescription.isEmpty ? "Premium bike from BikeStore." : draftDescription,
             price: parsedPrice,
@@ -496,28 +583,32 @@ private struct StatCard: View {
     let value: String
     let icon: String
     let color: Color
+    let action: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(color)
-                Spacer()
-                Text(title)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(AppTheme.mutedText)
-            }
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(color)
+                    Spacer()
+                    Text(title)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(AppTheme.mutedText)
+                }
 
-            Text(value)
-                .font(.system(size: 25, weight: .heavy))
-                .foregroundStyle(AppTheme.navy)
+                Text(value)
+                    .font(.system(size: 25, weight: .heavy))
+                    .foregroundStyle(AppTheme.navy)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, minHeight: 110)
+            .background(Color(.white))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, minHeight: 110)
-        .background(Color(.white))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
+        .buttonStyle(.plain)
     }
 }
 
@@ -884,6 +975,185 @@ private struct CustomerCard: View {
         formatter.currencyCode = "PHP"
         formatter.maximumFractionDigits = 0
         return formatter.string(from: NSNumber(value: value)) ?? "₱0"
+    }
+}
+
+private struct RevenueDetailSheet: View {
+    let orders: [Order]
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(orders, id: \.id) { order in
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text(order.customerName)
+                                .font(.system(size: 15, weight: .bold))
+                            Spacer()
+                            Text("₱\(Int(order.total))")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(AppTheme.navy)
+                        }
+                        Text(order.id)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(AppTheme.mutedText)
+                        Text(order.createdAt.formatted(date: .abbreviated, time: .shortened))
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(AppTheme.mutedText)
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            .navigationTitle("Revenue summary")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {}
+                }
+            }
+        }
+    }
+}
+
+private struct OrderDetailSheet: View {
+    let order: Order
+    let onStatusChange: (String) -> Void
+
+    var statusColor: Color {
+        switch order.status {
+        case "Pending": return .orange
+        case "Processing": return .blue
+        case "Shipped": return .purple
+        case "Completed": return .green
+        case "Cancelled": return .red
+        default: return .gray
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Order") {
+                    LabeledContent("ID", value: order.id)
+                    LabeledContent("Customer", value: order.customerName)
+                    LabeledContent("Payment", value: order.paymentMethod)
+                    LabeledContent("Address", value: order.address.isEmpty ? "Not provided" : order.address)
+                }
+
+                Section("Status") {
+                    Picker("Current status", selection: Binding(
+                        get: { order.status },
+                        set: { onStatusChange($0) }
+                    )) {
+                        ForEach(["Pending", "Processing", "Shipped", "Completed", "Cancelled"], id: \.self) { status in
+                            Text(status).tag(status)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                Section("Items") {
+                    ForEach(order.items, id: \.id) { item in
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(item.name)
+                                Text("Qty: \(item.quantity)")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(AppTheme.mutedText)
+                            }
+                            Spacer()
+                            Text("₱\(Int(item.unitPrice * Double(item.quantity)))")
+                                .font(.system(size: 13, weight: .bold))
+                        }
+                    }
+                }
+
+                Section("Totals") {
+                    LabeledContent("Subtotal", value: "₱\(Int(order.subtotal))")
+                    LabeledContent("Shipping", value: "₱\(Int(order.shipping))")
+                    LabeledContent("Total", value: "₱\(Int(order.total))")
+                }
+            }
+            .navigationTitle("Order details")
+        }
+    }
+}
+
+private struct ProductDetailSheet: View {
+    let bike: Bike
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Overview") {
+                    LabeledContent("Name", value: bike.name)
+                    LabeledContent("Category", value: bike.category)
+                    LabeledContent("Type", value: bike.type)
+                    LabeledContent("Price", value: "₱\(Int(bike.price))")
+                    LabeledContent("Stock", value: "\(bike.stock)")
+                }
+
+                Section("Description") {
+                    Text(bike.description)
+                }
+
+                Section("Specifications") {
+                    ForEach(Array(bike.specs.keys.sorted()), id: \.self) { key in
+                        if let value = bike.specs[key] {
+                            LabeledContent(key, value: value)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Product details")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Edit") { onEdit() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Delete", role: .destructive) { onDelete() }
+                }
+            }
+        }
+    }
+}
+
+private struct CustomerDetailSheet: View {
+    let customer: User
+    let orders: [Order]
+
+    var totalSpent: Double {
+        orders.reduce(0) { $0 + $1.total }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Profile") {
+                    LabeledContent("Name", value: customer.fullName)
+                    LabeledContent("Email", value: customer.email)
+                    LabeledContent("Phone", value: customer.phone.isEmpty ? "Not provided" : customer.phone)
+                    LabeledContent("Orders", value: "\(orders.count)")
+                    LabeledContent("Total spent", value: "₱\(Int(totalSpent))")
+                }
+
+                Section("Order history") {
+                    ForEach(orders, id: \.id) { order in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(order.id)
+                                .font(.system(size: 13, weight: .bold))
+                            Text(order.createdAt.formatted(date: .abbreviated, time: .shortened))
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(AppTheme.mutedText)
+                            Text("\(order.status) • ₱\(Int(order.total))")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Customer details")
+        }
     }
 }
 
