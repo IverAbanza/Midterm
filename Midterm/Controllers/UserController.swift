@@ -5,6 +5,7 @@ final class UserController: ObservableObject {
     static let adminEmail = User.adminEmail
     static let adminRole = User.adminRole
     static let customerRole = User.customerRole
+    static let adminPassword = "Admin123!"
 
     @Published var currentUser: User?
     @Published var isLoggedIn: Bool
@@ -16,14 +17,16 @@ final class UserController: ObservableObject {
 
     private let legacyUserKey = "bikeStore.user"
     private let usersKey = "bikeStore.users"
+    private let usersBackupKey = "bikeStore.users.backup"
     private let favoritesKey = "bikeStore.favorites"
-    private let loginKey = "bikeStore.loggedin"
-    private let activeUserEmailKey = "bikeStore.activeUserEmail"
+    static let loginKey = "bikeStore.loggedin"
+    static let activeUserEmailKey = "bikeStore.activeUserEmail"
     private let onboardingKey = "bikeStore.onboarding"
 
     init() {
+        Self.ensureSeedAdminAccount()
         self.currentUser = UserController.loadSavedUser()
-        self.isLoggedIn = UserDefaults.standard.bool(forKey: loginKey)
+        self.isLoggedIn = UserDefaults.standard.bool(forKey: Self.loginKey)
         self.onboardingCompleted = UserDefaults.standard.bool(forKey: onboardingKey)
     }
 
@@ -32,7 +35,17 @@ final class UserController: ObservableObject {
     }
 
     static func normalizedRole(_ value: String?) -> String {
-        (value ?? customerRole).lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let role = (value ?? customerRole).lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        if role.isEmpty { return customerRole }
+        return role
+    }
+
+    static func isAdminRole(_ value: String?) -> Bool {
+        normalizedRole(value) == adminRole
+    }
+
+    static func isCustomerRole(_ value: String?) -> Bool {
+        normalizedRole(value) == customerRole
     }
 
     static func loadSavedUsers() -> [User] {
@@ -61,11 +74,77 @@ final class UserController: ObservableObject {
         return users.first
     }
 
+    static func ensureSeedAdminAccount() {
+        var users = loadSavedUsers()
+        let adminIndex = users.firstIndex { Self.normalizedEmail($0.email) == Self.adminEmail }
+
+        let adminUser = User(
+            id: UUID(uuidString: "11111111-1111-1111-1111-111111111111") ?? UUID(),
+            fullName: "BikeStore Admin",
+            email: Self.adminEmail,
+            phone: "",
+            address: "",
+            password: Self.adminPassword,
+            role: Self.adminRole
+        )
+
+        if let adminIndex {
+            users[adminIndex] = User(
+                id: users[adminIndex].id,
+                fullName: users[adminIndex].fullName.isEmpty ? adminUser.fullName : users[adminIndex].fullName,
+                email: Self.adminEmail,
+                phone: users[adminIndex].phone,
+                address: users[adminIndex].address,
+                password: Self.adminPassword,
+                role: Self.adminRole
+            )
+        } else {
+            users.append(adminUser)
+        }
+
+        persistUsers(users)
+    }
+
+    static func resetCustomerAccountsKeepingAdmin() {
+        let users = loadSavedUsers()
+        let adminUsers = users.filter { Self.normalizedEmail($0.email) == Self.adminEmail && Self.normalizedRole($0.role) == Self.adminRole }
+        let adminUser = adminUsers.first ?? User(
+            id: UUID(uuidString: "11111111-1111-1111-1111-111111111111") ?? UUID(),
+            fullName: "BikeStore Admin",
+            email: Self.adminEmail,
+            phone: "",
+            address: "",
+            password: Self.adminPassword,
+            role: Self.adminRole
+        )
+
+        let customerRecords = users.filter { Self.normalizedEmail($0.email) != Self.adminEmail }
+        if !customerRecords.isEmpty, let backupData = try? JSONEncoder().encode(customerRecords) {
+            UserDefaults.standard.set(backupData, forKey: "bikeStore.users.backup")
+        }
+
+        let finalUsers = [adminUser]
+        persistUsers(finalUsers)
+        UserDefaults.standard.set(false, forKey: Self.loginKey)
+        UserDefaults.standard.removeObject(forKey: Self.activeUserEmailKey)
+    }
+
+    static func persistUsers(_ users: [User]) {
+        if let data = try? JSONEncoder().encode(users) {
+            UserDefaults.standard.set(data, forKey: "bikeStore.users")
+        }
+
+        if let activeUser = users.first(where: { Self.normalizedEmail($0.email) == Self.adminEmail }) {
+            if let userData = try? JSONEncoder().encode(activeUser) {
+                UserDefaults.standard.set(userData, forKey: "bikeStore.user")
+            }
+        }
+    }
+
     static func isAuthorizedAdminUser(_ user: User?) -> Bool {
         guard let user else { return false }
         let normalizedEmail = normalizedEmail(user.email)
-        let normalizedRole = normalizedRole(user.role)
-        return normalizedEmail == adminEmail && normalizedRole == adminRole
+        return normalizedEmail == adminEmail && isAdminRole(user.role)
     }
 
     func signUp(fullName: String, email: String, password: String, confirmPassword: String) -> (Bool, String) {
@@ -108,8 +187,8 @@ final class UserController: ObservableObject {
         currentUser = user
         isLoggedIn = true
         saveUser(user)
-        UserDefaults.standard.set(normalizedEmail, forKey: activeUserEmailKey)
-        UserDefaults.standard.set(true, forKey: loginKey)
+        UserDefaults.standard.set(normalizedEmail, forKey: Self.activeUserEmailKey)
+        UserDefaults.standard.set(true, forKey: Self.loginKey)
 
         return (true, "Account created successfully.")
     }
@@ -134,21 +213,21 @@ final class UserController: ObservableObject {
         }
 
         if normalizedEmail == Self.adminEmail {
-            if savedUser.isAdmin {
+            if Self.isAdminRole(savedUser.role) {
                 currentUser = savedUser
                 isLoggedIn = true
-                UserDefaults.standard.set(normalizedEmail, forKey: activeUserEmailKey)
-                UserDefaults.standard.set(true, forKey: loginKey)
+                UserDefaults.standard.set(normalizedEmail, forKey: Self.activeUserEmailKey)
+                UserDefaults.standard.set(true, forKey: Self.loginKey)
                 return (true, "Admin login successful.")
             }
             return (false, "This account is not authorized as the BikeStore administrator.")
         }
 
-        if Self.normalizedRole(savedUser.role) == Self.customerRole {
+        if Self.isCustomerRole(savedUser.role) || Self.normalizedRole(savedUser.role).isEmpty {
             currentUser = savedUser
             isLoggedIn = true
-            UserDefaults.standard.set(normalizedEmail, forKey: activeUserEmailKey)
-            UserDefaults.standard.set(true, forKey: loginKey)
+            UserDefaults.standard.set(normalizedEmail, forKey: Self.activeUserEmailKey)
+            UserDefaults.standard.set(true, forKey: Self.loginKey)
             return (true, "Login successful.")
         }
 
@@ -158,8 +237,8 @@ final class UserController: ObservableObject {
     func logout() {
         currentUser = nil
         isLoggedIn = false
-        UserDefaults.standard.set(false, forKey: loginKey)
-        UserDefaults.standard.removeObject(forKey: activeUserEmailKey)
+        UserDefaults.standard.set(false, forKey: Self.loginKey)
+        UserDefaults.standard.removeObject(forKey: Self.activeUserEmailKey)
     }
 
     func saveProfile(fullName: String, email: String, phone: String, address: String = "") -> (Bool, String) {
