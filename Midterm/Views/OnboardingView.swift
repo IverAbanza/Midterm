@@ -16,7 +16,7 @@ struct OnboardingView: View {
             HStack {
                 Spacer()
                 Button("Skip", action: onSkip)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppTheme.mutedText)
             }
             .padding(.horizontal)
 
@@ -24,8 +24,8 @@ struct OnboardingView: View {
                 ForEach(pages.indices, id: \.self) { index in
                     VStack(spacing: 18) {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 26)
-                                .fill(LinearGradient(colors: [Color(red: 0.07, green: 0.11, blue: 0.21), Color(red: 0.18, green: 0.39, blue: 0.90)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                                .fill(LinearGradient(colors: [AppTheme.navy, AppTheme.blue], startPoint: .topLeading, endPoint: .bottomTrailing))
                                 .frame(height: 340)
 
                             Image(systemName: pages[index].icon)
@@ -38,7 +38,7 @@ struct OnboardingView: View {
 
                         Text(pages[index].subtitle)
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.mutedText)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 30)
                     }
@@ -50,7 +50,7 @@ struct OnboardingView: View {
             HStack(spacing: 10) {
                 ForEach(pages.indices, id: \.self) { index in
                     Circle()
-                        .fill(index == currentPage ? Color(red: 0.07, green: 0.11, blue: 0.21) : Color.gray.opacity(0.3))
+                        .fill(index == currentPage ? AppTheme.navy : Color.gray.opacity(0.3))
                         .frame(width: 10, height: 10)
                 }
             }

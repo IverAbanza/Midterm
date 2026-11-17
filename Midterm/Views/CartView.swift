@@ -8,15 +8,20 @@ struct CartView: View {
         NavigationStack {
             if cartController.items.isEmpty {
                 VStack(spacing: 16) {
-                    Image(systemName: "cart.fill")
-                        .font(.system(size: 54, weight: .bold))
-                        .foregroundStyle(.secondary)
+                    ZStack {
+                        Circle()
+                            .fill(AppTheme.blue.opacity(0.1))
+                            .frame(width: 110, height: 110)
+                        Image(systemName: "cart.fill")
+                            .font(.system(size: 44, weight: .bold))
+                            .foregroundStyle(AppTheme.blue)
+                    }
 
                     Text("Your cart is empty")
                         .font(.system(size: 22, weight: .bold))
 
                     Text("Add a bike to begin your next ride.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.mutedText)
                 }
                 .padding()
                 .navigationTitle("Cart")
@@ -27,9 +32,9 @@ struct CartView: View {
                             if let bike = bikeController.bikes.first(where: { $0.id == item.bikeId }) {
                                 HStack(spacing: 14) {
                                     ZStack {
-                                        RoundedRectangle(cornerRadius: 16)
+                                        RoundedRectangle(cornerRadius: 18, style: .continuous)
                                             .fill(bike.accent.opacity(0.16))
-                                            .frame(width: 76, height: 76)
+                                            .frame(width: 78, height: 78)
                                         Image(systemName: "bicycle")
                                             .font(.system(size: 30, weight: .bold))
                                             .foregroundStyle(bike.accent)
@@ -39,8 +44,8 @@ struct CartView: View {
                                         Text(bike.name)
                                             .font(.system(size: 16, weight: .semibold))
                                         Text("\(item.quantity) item(s)")
-                                            .font(.system(size: 12))
-                                            .foregroundStyle(.secondary)
+                                            .font(.system(size: 12, weight: .medium))
+                                            .foregroundStyle(AppTheme.mutedText)
                                     }
 
                                     Spacer()
@@ -48,6 +53,7 @@ struct CartView: View {
                                     VStack(alignment: .trailing, spacing: 4) {
                                         Text("₱\(Int(bike.price * Double(item.quantity)))")
                                             .font(.system(size: 15, weight: .bold))
+                                            .foregroundStyle(AppTheme.navy)
                                         Button(role: .destructive) {
                                             cartController.remove(bikeId: bike.id)
                                         } label: {
@@ -57,8 +63,8 @@ struct CartView: View {
                                     }
                                 }
                                 .padding()
-                                .background(Color(.systemGray6))
-                                .clipShape(RoundedRectangle(cornerRadius: 18))
+                                .background(AppTheme.card)
+                                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                             }
                         }
 
@@ -68,6 +74,7 @@ struct CartView: View {
 
                             HStack {
                                 Text("Subtotal")
+                                    .foregroundStyle(AppTheme.mutedText)
                                 Spacer()
                                 Text("₱\(Int(cartController.subtotal(for: bikeController.bikes)))")
                                     .fontWeight(.semibold)
@@ -75,6 +82,7 @@ struct CartView: View {
 
                             HStack {
                                 Text("Delivery")
+                                    .foregroundStyle(AppTheme.mutedText)
                                 Spacer()
                                 Text("Free")
                                     .fontWeight(.semibold)
@@ -88,12 +96,13 @@ struct CartView: View {
                                 Spacer()
                                 Text("₱\(Int(cartController.total(for: bikeController.bikes)))")
                                     .font(.system(size: 18, weight: .bold))
+                                    .foregroundStyle(AppTheme.navy)
                             }
                         }
                         .padding()
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color(.systemGray6))
-                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                        .background(AppTheme.card)
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
                         Button {
                             print("Checkout tapped")
@@ -103,8 +112,15 @@ struct CartView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .foregroundStyle(.white)
-                                .background(Color(red: 0.07, green: 0.11, blue: 0.21))
-                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                                .background(
+                                    LinearGradient(
+                                        colors: [AppTheme.navy, AppTheme.blue],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .shadow(color: AppTheme.blue.opacity(0.18), radius: 10, x: 0, y: 8)
                         }
                     }
                     .padding()

@@ -13,10 +13,10 @@ struct MessagesView: View {
                 HStack(alignment: .top, spacing: 12) {
                     ZStack {
                         Circle()
-                            .fill(Color(red: 0.07, green: 0.11, blue: 0.21).opacity(0.12))
+                            .fill(AppTheme.navy.opacity(0.12))
                             .frame(width: 48, height: 48)
                         Image(systemName: "message.fill")
-                            .foregroundStyle(Color(red: 0.07, green: 0.11, blue: 0.21))
+                            .foregroundStyle(AppTheme.navy)
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -26,12 +26,12 @@ struct MessagesView: View {
                             Spacer()
                             Text(item.time)
                                 .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(AppTheme.mutedText)
                         }
 
                         Text(item.preview)
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.mutedText)
                             .lineLimit(2)
                     }
 
@@ -40,7 +40,7 @@ struct MessagesView: View {
                             .font(.system(size: 10, weight: .bold))
                             .foregroundStyle(.white)
                             .frame(width: 20, height: 20)
-                            .background(Color(red: 0.07, green: 0.11, blue: 0.21))
+                            .background(AppTheme.navy)
                             .clipShape(Circle())
                     }
                 }

@@ -24,10 +24,11 @@ struct ShopView: View {
                     Spacer()
                     Button(action: {}) {
                         Image(systemName: "slider.horizontal.3")
-                            .foregroundStyle(.primary)
-                            .frame(width: 40, height: 40)
-                            .background(Color(.systemGray6))
+                            .foregroundStyle(AppTheme.navy)
+                            .frame(width: 42, height: 42)
+                            .background(AppTheme.card)
                             .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.03), radius: 8, x: 0, y: 3)
                     }
                 }
 
@@ -41,7 +42,7 @@ struct ShopView: View {
                                     .font(.system(size: 13, weight: .semibold))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 9)
-                                    .background(selectedCategory == category ? Color(red: 0.07, green: 0.11, blue: 0.21) : Color(.systemGray6))
+                                    .background(selectedCategory == category ? AppTheme.navy : AppTheme.card)
                                     .foregroundStyle(selectedCategory == category ? .white : .primary)
                                     .clipShape(Capsule())
                             }
@@ -69,7 +70,7 @@ struct ShopView: View {
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(Color(.systemGray6))
+                        .background(AppTheme.card)
                         .clipShape(Capsule())
                     }
                 }

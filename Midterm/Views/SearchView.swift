@@ -28,7 +28,7 @@ struct SearchView: View {
                             Text(item)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 8)
-                                .background(category == item ? Color(red: 0.07, green: 0.11, blue: 0.21) : Color(.systemGray6))
+                                .background(category == item ? AppTheme.navy : AppTheme.card)
                                 .foregroundStyle(category == item ? .white : .primary)
                                 .clipShape(Capsule())
                         }

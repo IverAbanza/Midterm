@@ -26,10 +26,23 @@ struct BikeDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 28)
+                ZStack(alignment: .topTrailing) {
+                    RoundedRectangle(cornerRadius: 30, style: .continuous)
                         .fill(bike.accent.opacity(0.16))
-                        .frame(height: 260)
+                        .frame(height: 290)
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 10, weight: .bold))
+                        Text(String(format: "%.1f", bike.rating))
+                            .font(.system(size: 12, weight: .bold))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .foregroundStyle(.white)
+                    .background(Color.black.opacity(0.22))
+                    .clipShape(Capsule())
+                    .padding(16)
 
                     Image(systemName: "bicycle")
                         .font(.system(size: 110, weight: .bold))
@@ -42,10 +55,21 @@ struct BikeDetailView: View {
 
                     Text(bike.type)
                         .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.mutedText)
 
-                    Text("₱\(Int(bike.price))")
-                        .font(.system(size: 24, weight: .bold))
+                    HStack {
+                        Text("₱\(Int(bike.price))")
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundStyle(AppTheme.navy)
+                        Spacer()
+                        Text(bike.isAvailable ? "In stock" : "Sold out")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(bike.isAvailable ? .green : .red)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background((bike.isAvailable ? Color.green : Color.red).opacity(0.12))
+                            .clipShape(Capsule())
+                    }
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
@@ -62,7 +86,7 @@ struct BikeDetailView: View {
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 8)
                                     .frame(minWidth: 62)
-                                    .background(selectedColor == colorName ? Color(red: 0.07, green: 0.11, blue: 0.21) : Color(.systemGray6))
+                                    .background(selectedColor == colorName ? AppTheme.navy : AppTheme.card)
                                     .foregroundStyle(selectedColor == colorName ? .white : .primary)
                                     .clipShape(Capsule())
                             }
@@ -82,9 +106,9 @@ struct BikeDetailView: View {
                                 Text(size)
                                     .font(.system(size: 12, weight: .semibold))
                                     .frame(width: 58, height: 38)
-                                    .background(selectedSize == size ? Color(red: 0.07, green: 0.11, blue: 0.21) : Color(.systemGray6))
+                                    .background(selectedSize == size ? AppTheme.navy : AppTheme.card)
                                     .foregroundStyle(selectedSize == size ? .white : .primary)
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             }
                         }
                     }
@@ -97,14 +121,15 @@ struct BikeDetailView: View {
                     ForEach(Array(bike.specs.keys.sorted()), id: \.self) { key in
                         HStack {
                             Text(key)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(AppTheme.mutedText)
                             Spacer()
                             Text(bike.specs[key] ?? "")
                                 .fontWeight(.semibold)
+                                .foregroundStyle(.primary)
                         }
                         .padding(12)
-                        .background(Color(.systemGray6))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .background(AppTheme.card)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
                 }
 
@@ -113,7 +138,7 @@ struct BikeDetailView: View {
                         .font(.system(size: 18, weight: .bold))
 
                     Text(bike.description)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.mutedText)
                         .lineSpacing(4)
                 }
 
@@ -128,8 +153,15 @@ struct BikeDetailView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .foregroundStyle(.white)
-                    .background(Color(red: 0.07, green: 0.11, blue: 0.21))
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .background(
+                        LinearGradient(
+                            colors: [AppTheme.navy, AppTheme.blue],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .shadow(color: AppTheme.blue.opacity(0.2), radius: 10, x: 0, y: 8)
                 }
             }
             .padding(20)

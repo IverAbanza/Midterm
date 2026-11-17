@@ -22,13 +22,13 @@ struct OrdersView: View {
                                     .font(.system(size: 11, weight: .bold))
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 5)
-                                    .background(Color.green.opacity(0.15))
-                                    .foregroundStyle(.green)
+                                    .background(statusColor(for: order.status).opacity(0.15))
+                                    .foregroundStyle(statusColor(for: order.status))
                                     .clipShape(Capsule())
                             }
 
                             Text(order.createdAt.formatted(date: .abbreviated, time: .shortened))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(AppTheme.mutedText)
 
                             ForEach(order.items, id: \.id) { item in
                                 HStack {
@@ -43,19 +43,32 @@ struct OrdersView: View {
 
                             HStack {
                                 Text("Total")
+                                    .foregroundStyle(AppTheme.mutedText)
                                 Spacer()
                                 Text("$\(Int(order.total))")
                                     .fontWeight(.bold)
+                                    .foregroundStyle(AppTheme.navy)
                             }
                         }
                         .padding()
-                        .background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                        .background(Color(.systemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                         .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 5)
                     }
                 }
             }
             .padding(20)
+        }
+    }
+
+    private func statusColor(for status: String) -> Color {
+        switch status {
+        case "Pending": return .orange
+        case "Processing": return .blue
+        case "Shipped": return .purple
+        case "Completed": return .green
+        case "Cancelled": return .red
+        default: return .gray
         }
     }
 }

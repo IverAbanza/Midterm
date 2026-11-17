@@ -12,85 +12,112 @@ struct LoginView: View {
     @State private var errorMessage = ""
 
     var body: some View {
-        VStack(spacing: 22) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Welcome back")
-                    .font(.system(size: 32, weight: .heavy))
-                Text("Sign in to continue")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+        ZStack {
+            LinearGradient(
+                colors: [AppTheme.lightBlue, Color(.systemBackground)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-            VStack(spacing: 16) {
-                TextField("Email address", text: $email)
-                    .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
-                    .padding(14)
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+            VStack(spacing: 24) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("BikeStore")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(AppTheme.navy)
+                        .tracking(1.2)
+
+                    Text("Welcome back")
+                        .font(.system(size: 34, weight: .heavy))
+                        .foregroundStyle(.primary)
+
+                    Text("Sign in to continue your ride")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(AppTheme.mutedText)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 20)
+
+                VStack(spacing: 16) {
+                    Group {
+                        TextField("Email address", text: $email)
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                            .padding(16)
+                            .background(Color(.secondarySystemBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .stroke(Color.primary.opacity(0.04), lineWidth: 1)
+                            )
+
+                        HStack {
+                            Group {
+                                if isPasswordVisible {
+                                    TextField("Password", text: $password)
+                                } else {
+                                    SecureField("Password", text: $password)
+                                }
+                            }
+                            .padding(16)
+
+                            Button {
+                                isPasswordVisible.toggle()
+                            } label: {
+                                Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
+                                    .foregroundStyle(AppTheme.mutedText)
+                                    .padding(.trailing, 8)
+                            }
+                        }
+                        .background(Color(.secondarySystemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(Color.primary.opacity(0.04), lineWidth: 1)
+                        )
+                    }
+                }
 
                 HStack {
-                    Group {
-                        if isPasswordVisible {
-                            TextField("Password", text: $password)
-                        } else {
-                            SecureField("Password", text: $password)
-                        }
+                    Toggle("Remember me", isOn: $rememberMe)
+                        .toggleStyle(.switch)
+                    Spacer()
+                    Button("Forgot password?") {
+                        errorMessage = "Password recovery is not available in this demo mode."
                     }
-                    .padding(14)
+                    .foregroundStyle(AppTheme.navy)
+                }
+                .font(.system(size: 13))
 
-                    Button {
-                        isPasswordVisible.toggle()
-                    } label: {
-                        Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
-                            .foregroundStyle(.secondary)
+                if !errorMessage.isEmpty {
+                    Text(errorMessage)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.red)
+                }
+
+                PrimaryButton(title: "Login", icon: "arrow.right") {
+                    let result = userController.signIn(email: email, password: password)
+                    if result.0 {
+                        errorMessage = ""
+                        onLoginSuccess()
+                    } else {
+                        errorMessage = result.1
                     }
-                    .padding(.trailing, 8)
                 }
-                .background(Color(.systemGray6))
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-            }
 
-            HStack {
-                Toggle("Remember me", isOn: $rememberMe)
-                    .toggleStyle(.switch)
-                Spacer()
-                Button("Forgot password?") {
-                    errorMessage = "Password recovery is not available in this demo mode."
-                }
-                .foregroundStyle(Color(red: 0.07, green: 0.11, blue: 0.21))
-            }
-            .font(.system(size: 13))
-
-            if !errorMessage.isEmpty {
-                Text(errorMessage)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.red)
-            }
-
-            PrimaryButton(title: "Login", icon: "arrow.right") {
-                let result = userController.signIn(email: email, password: password)
-                if result.0 {
-                    errorMessage = ""
-                    onLoginSuccess()
-                } else {
-                    errorMessage = result.1
+                Button(action: onCreateAccount) {
+                    HStack(spacing: 6) {
+                        Text("Don’t have an account?")
+                            .foregroundStyle(AppTheme.mutedText)
+                        Text("Sign Up")
+                            .foregroundStyle(AppTheme.navy)
+                            .fontWeight(.bold)
+                    }
                 }
             }
-
-            Button(action: onCreateAccount) {
-                HStack(spacing: 6) {
-                    Text("Don’t have an account?")
-                        .foregroundStyle(.secondary)
-                    Text("Sign Up")
-                        .foregroundStyle(Color(red: 0.07, green: 0.11, blue: 0.21))
-                        .fontWeight(.bold)
-                }
-            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 18)
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 18)
     }
 }
 

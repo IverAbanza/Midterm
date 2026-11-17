@@ -23,22 +23,23 @@ struct FavoritesView: View {
                         ForEach(favoriteBikes, id: \.id) { bike in
                             HStack(spacing: 12) {
                                 ZStack {
-                                    RoundedRectangle(cornerRadius: 16)
+                                    RoundedRectangle(cornerRadius: 18, style: .continuous)
                                         .fill(bike.accent.opacity(0.12))
-                                        .frame(width: 72, height: 72)
+                                        .frame(width: 74, height: 74)
                                     Image(systemName: "bicycle")
                                         .font(.system(size: 28, weight: .bold))
                                         .foregroundStyle(bike.accent)
                                 }
 
-                                VStack(alignment: .leading) {
+                                VStack(alignment: .leading, spacing: 4) {
                                     Text(bike.name)
                                         .font(.system(size: 16, weight: .bold))
                                     Text(bike.type)
                                         .font(.system(size: 12, weight: .medium))
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(AppTheme.mutedText)
                                     Text("$\(Int(bike.price))")
                                         .font(.system(size: 17, weight: .heavy))
+                                        .foregroundStyle(AppTheme.navy)
                                 }
 
                                 Spacer()
@@ -49,14 +50,14 @@ struct FavoritesView: View {
                                     Image(systemName: "cart.fill")
                                         .foregroundStyle(.white)
                                         .padding(10)
-                                        .background(Color(red: 0.07, green: 0.11, blue: 0.21))
+                                        .background(AppTheme.navy)
                                         .clipShape(Circle())
                                 }
                             }
                             .padding()
-                            .background(Color.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 18))
-                            .shadow(color: .black.opacity(0.06), radius: 2, x: 0, y: 2)
+                            .background(Color(.systemBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 4)
                         }
                     }
                     .padding()
