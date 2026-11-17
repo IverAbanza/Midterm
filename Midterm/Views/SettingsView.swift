@@ -7,6 +7,8 @@ struct SettingsView: View {
     @State private var orderUpdates = true
     @State private var darkMode = false
     @State private var locationAccess = true
+    @State private var alertMessage = ""
+    @State private var showAlert = false
 
     var body: some View {
         NavigationStack {
@@ -44,9 +46,18 @@ struct SettingsView: View {
                     }
 
                     settingsSection(title: "Support") {
-                        SettingLinkRow(title: "Help Center", icon: "questionmark.circle")
-                        SettingLinkRow(title: "Privacy Policy", icon: "shield.fill")
-                        SettingLinkRow(title: "Terms of Service", icon: "doc.text")
+                        SettingLinkRow(title: "Help Center", icon: "questionmark.circle") {
+                            alertMessage = "A support specialist will contact you within 24 hours."
+                            showAlert = true
+                        }
+                        SettingLinkRow(title: "Privacy Policy", icon: "shield.fill") {
+                            alertMessage = "Your ride data is stored securely and never sold to third parties."
+                            showAlert = true
+                        }
+                        SettingLinkRow(title: "Terms of Service", icon: "doc.text") {
+                            alertMessage = "Service terms are available in the store policy section on the web app."
+                            showAlert = true
+                        }
                     }
 
                     Button(role: .destructive) {
@@ -63,6 +74,11 @@ struct SettingsView: View {
                 .padding(18)
             }
             .navigationTitle("Settings")
+            .alert("Settings", isPresented: $showAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(alertMessage)
+            }
         }
     }
 
@@ -104,23 +120,28 @@ private struct ToggleRow: View {
 private struct SettingLinkRow: View {
     let title: String
     let icon: String
+    let action: () -> Void
 
     var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .frame(width: 24)
-                .foregroundStyle(AppTheme.navy)
-            Text(title)
-                .font(.system(size: 15, weight: .medium))
-            Spacer()
-            Image(systemName: "chevron.right")
-                .foregroundStyle(AppTheme.mutedText)
+        Button(action: action) {
+            HStack {
+                Image(systemName: icon)
+                    .frame(width: 24)
+                    .foregroundStyle(AppTheme.navy)
+                Text(title)
+                    .font(.system(size: 15, weight: .medium))
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(AppTheme.mutedText)
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+            .foregroundStyle(.primary)
+            .overlay(
+                Divider().padding(.leading), alignment: .bottom
+            )
         }
-        .padding(.horizontal)
-        .padding(.vertical, 12)
-        .overlay(
-            Divider().padding(.leading), alignment: .bottom
-        )
+        .buttonStyle(.plain)
     }
 }
 

@@ -21,7 +21,7 @@ struct ContentView: View {
             )
         } else if userController.isLoggedIn {
             TabView(selection: $currentTab) {
-                HomeView()
+                HomeView(bikeController: bikeController, cartController: cartController, userController: userController)
                     .tag(0)
                     .tabItem { Label("Home", systemImage: "house.fill") }
 

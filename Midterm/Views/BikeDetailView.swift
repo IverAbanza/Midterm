@@ -8,6 +8,7 @@ struct BikeDetailView: View {
 
     @State private var selectedColor: String
     @State private var selectedSize: String
+    @State private var addedToCart = false
 
     init(
         bike: Bike,
@@ -27,8 +28,7 @@ struct BikeDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 ZStack(alignment: .topTrailing) {
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .fill(bike.accent.opacity(0.16))
+                    BikeArtwork(bike: bike)
                         .frame(height: 290)
 
                     HStack(spacing: 4) {
@@ -43,10 +43,6 @@ struct BikeDetailView: View {
                     .background(Color.black.opacity(0.22))
                     .clipShape(Capsule())
                     .padding(16)
-
-                    Image(systemName: "bicycle")
-                        .font(.system(size: 110, weight: .bold))
-                        .foregroundStyle(bike.accent)
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -142,26 +138,44 @@ struct BikeDetailView: View {
                         .lineSpacing(4)
                 }
 
-                Button {
-                    cartController?.add(bike: bike)
-                } label: {
-                    HStack {
-                        Image(systemName: "cart.fill")
-                        Text("Add to Cart")
-                            .fontWeight(.bold)
+                VStack(spacing: 10) {
+                    if addedToCart {
+                        Text("Added to cart")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.green)
+                            .transition(.opacity)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .foregroundStyle(.white)
-                    .background(
-                        LinearGradient(
-                            colors: [AppTheme.navy, AppTheme.blue],
-                            startPoint: .leading,
-                            endPoint: .trailing
+
+                    Button {
+                        cartController?.add(bike: bike)
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                            addedToCart = true
+                        }
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            withAnimation {
+                                addedToCart = false
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Image(systemName: "cart.fill")
+                            Text("Add to Cart")
+                                .fontWeight(.bold)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .foregroundStyle(.white)
+                        .background(
+                            LinearGradient(
+                                colors: [AppTheme.navy, AppTheme.blue],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
                         )
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .shadow(color: AppTheme.blue.opacity(0.2), radius: 10, x: 0, y: 8)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .shadow(color: AppTheme.blue.opacity(0.2), radius: 10, x: 0, y: 8)
+                    }
                 }
             }
             .padding(20)

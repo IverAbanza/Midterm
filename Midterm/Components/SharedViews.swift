@@ -96,16 +96,102 @@ struct PrimaryButton: View {
     }
 }
 
+struct BikeArtwork: View {
+    let bike: Bike
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(LinearGradient(
+                    colors: [bike.accent.opacity(0.24), bike.accent.opacity(0.08)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ))
+                .frame(height: 170)
+
+            Circle()
+                .fill(.white.opacity(0.20))
+                .frame(width: 118, height: 118)
+                .offset(x: -30, y: 18)
+
+            HStack(spacing: 28) {
+                BikeWheel()
+                BikeWheel()
+            }
+            .offset(y: 34)
+
+            VStack(spacing: 0) {
+                Capsule()
+                    .fill(bike.accent)
+                    .frame(width: 104, height: 6)
+                    .rotationEffect(.degrees(-28))
+                    .offset(x: 8, y: -12)
+
+                Capsule()
+                    .fill(bike.accent)
+                    .frame(width: 90, height: 6)
+                    .rotationEffect(.degrees(26))
+                    .offset(x: 18, y: 10)
+
+                Capsule()
+                    .fill(bike.accent)
+                    .frame(width: 110, height: 6)
+                    .rotationEffect(.degrees(2))
+                    .offset(x: 10, y: 10)
+
+                Capsule()
+                    .fill(bike.accent)
+                    .frame(width: 54, height: 6)
+                    .rotationEffect(.degrees(-72))
+                    .offset(x: -10, y: 22)
+
+                Capsule()
+                    .fill(bike.accent)
+                    .frame(width: 38, height: 6)
+                    .rotationEffect(.degrees(-20))
+                    .offset(x: 16, y: -8)
+            }
+            .frame(width: 160, height: 90)
+            .offset(x: 0, y: -8)
+
+            Circle()
+                .fill(bike.accent)
+                .frame(width: 14, height: 14)
+                .offset(x: -16, y: -8)
+        }
+    }
+}
+
+private struct BikeWheel: View {
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(Color.black.opacity(0.10))
+                .frame(width: 58, height: 58)
+
+            Circle()
+                .stroke(Color.white.opacity(0.70), lineWidth: 4)
+                .frame(width: 58, height: 58)
+
+            Circle()
+                .fill(Color.clear)
+                .frame(width: 16, height: 16)
+                .overlay(
+                    Circle()
+                        .stroke(Color.white.opacity(0.55), lineWidth: 2)
+                )
+        }
+    }
+}
+
 struct BikeCard: View {
     let bike: Bike
+    let onTap: () -> Void
     let action: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             ZStack(alignment: .topTrailing) {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(bike.accent.opacity(0.16))
-                    .frame(height: 165)
+                BikeArtwork(bike: bike)
 
                 HStack(spacing: 4) {
                     Image(systemName: "star.fill")
@@ -119,10 +205,6 @@ struct BikeCard: View {
                 .background(Color.black.opacity(0.22))
                 .clipShape(Capsule())
                 .padding(10)
-
-                Image(systemName: "bicycle")
-                    .font(.system(size: 46, weight: .bold))
-                    .foregroundStyle(bike.accent)
             }
 
             VStack(alignment: .leading, spacing: 5) {
@@ -157,5 +239,7 @@ struct BikeCard: View {
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 8)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onTap)
     }
 }
