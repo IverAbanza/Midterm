@@ -21,7 +21,7 @@ struct HomeView: View {
         NavigationStack {
             ZStack {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 22) {
+                    LazyVStack(alignment: .leading, spacing: 22) {
                         HStack {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("BikeStore")
@@ -132,46 +132,19 @@ struct HomeView: View {
                             }
 
                             ForEach(filteredFeatured, id: \.id) { bike in
-                                Button(action: {
-                                    selectedBike = bike
-                                    showDetail = true
-                                }) {
-                                    HStack(spacing: 14) {
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                                .fill(bike.accent.opacity(0.16))
-                                                .frame(width: 84, height: 84)
-                                            BikeArtwork(bike: bike)
-                                                .frame(width: 84, height: 84)
-                                                .scaleEffect(0.7)
-                                        }
-
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(bike.name)
-                                                .font(.system(size: 16, weight: .bold))
-                                                .foregroundStyle(.primary)
-                                            Text(bike.type)
-                                                .font(.system(size: 12, weight: .medium))
-                                                .foregroundStyle(AppTheme.mutedText)
-                                            Text("₱\(Int(bike.price))")
-                                                .font(.system(size: 15, weight: .bold))
-                                                .foregroundStyle(AppTheme.navy)
-                                        }
-
-                                        Spacer()
-                                        Image(systemName: "chevron.right")
-                                            .foregroundStyle(AppTheme.mutedText)
+                                PopularPickCard(
+                                    bike: bike,
+                                    onTap: {
+                                        selectedBike = bike
+                                        showDetail = true
                                     }
-                                    .padding()
-                                    .background(Color(.systemBackground))
-                                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                                    .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 5)
-                                }
-                                .buttonStyle(.plain)
+                                )
                             }
                         }
                     }
-                    .padding(18)
+                    .padding(.horizontal, 18)
+                    .padding(.top, 18)
+                    .padding(.bottom, 12)
                 }
             }
             .navigationTitle("Home")
@@ -186,6 +159,81 @@ struct HomeView: View {
                 Text("You have 2 new bike alerts and 1 shipping update.")
             }
         }
+    }
+}
+
+private struct PopularPickCard: View {
+    let bike: Bike
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            GeometryReader { proxy in
+                let imageWidth = proxy.size.width * 0.38
+                let infoWidth = max(proxy.size.width - imageWidth - 16 - 24, 0)
+
+                HStack(alignment: .center, spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(AppTheme.lightBlue)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                        Image(bike.imageName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: imageWidth * 0.96, height: imageWidth * 0.82)
+                            .padding(10)
+                    }
+                    .frame(width: imageWidth, height: 108)
+                    .clipped()
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(bike.name)
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(.primary)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(2)
+                            .frame(maxWidth: infoWidth, alignment: .leading)
+
+                        Text(bike.type)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(AppTheme.mutedText)
+                            .lineLimit(1)
+                            .frame(maxWidth: infoWidth, alignment: .leading)
+
+                        Text("₱\(Int(bike.price))")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(AppTheme.navy)
+                            .lineLimit(1)
+                            .frame(maxWidth: infoWidth, alignment: .leading)
+
+                        HStack(spacing: 4) {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.orange)
+                            Text(String(format: "%.1f", bike.rating))
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.primary)
+                        }
+                        .frame(maxWidth: infoWidth, alignment: .leading)
+                    }
+                    .frame(width: infoWidth, alignment: .leading)
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(AppTheme.mutedText)
+                        .frame(width: 16, alignment: .center)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(height: 110)
+            .padding(14)
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 5)
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

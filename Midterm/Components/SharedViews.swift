@@ -107,25 +107,19 @@ struct BikeArtwork: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [bike.accent.opacity(0.22), bike.accent.opacity(0.08), .white],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(height: height)
-                .shadow(color: bike.accent.opacity(0.16), radius: 18, x: 0, y: 12)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(AppTheme.lightBlue)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             Image(bike.imageName)
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: .infinity, maxHeight: height - 18)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 8)
+                .frame(width: max(height * 0.8, 100), height: max(height * 0.72, 90))
+                .padding(12)
                 .accessibilityLabel("\(bike.name) image")
         }
+        .frame(height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 }
 
