@@ -95,14 +95,15 @@ final class UserController: ObservableObject {
         UserDefaults.standard.set(false, forKey: loginKey)
     }
 
-    func saveProfile(fullName: String, email: String, phone: String) -> (Bool, String) {
+    func saveProfile(fullName: String, email: String, phone: String, address: String = "") -> (Bool, String) {
         guard let user = currentUser else { return (false, "No user available.") }
 
         if fullName.isEmpty || email.isEmpty {
             return (false, "Full name and email are required.")
         }
 
-        let updated = User(id: user.id, fullName: fullName, email: email, phone: phone, address: user.address, password: user.password, role: user.role)
+        let finalAddress = address.isEmpty ? user.address : address
+        let updated = User(id: user.id, fullName: fullName, email: email, phone: phone, address: finalAddress, password: user.password, role: user.role)
         currentUser = updated
         saveUser(updated)
         return (true, "Profile updated successfully.")
@@ -115,10 +116,18 @@ final class UserController: ObservableObject {
 
     func registeredCustomers() -> [User] {
         var users: [User] = []
-        if let saved = Self.loadSavedUser() {
-            users.append(saved)
+
+        if let current = currentUser, !current.isAdmin {
+            users.append(current)
         }
-        return users.filter { !$0.isAdmin }
+
+        if let saved = Self.loadSavedUser(), !saved.isAdmin {
+            if !users.contains(where: { $0.id == saved.id }) {
+                users.append(saved)
+            }
+        }
+
+        return users
     }
 
     private func saveUser(_ user: User) {

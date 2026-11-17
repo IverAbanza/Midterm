@@ -13,7 +13,7 @@ struct HomeView: View {
     private let categories = ["All", "Mountain", "Road", "Hybrid", "City"]
 
     var filteredFeatured: [Bike] {
-        let list = sampleBikes.filter { selectedCategory == "All" ? true : $0.category == selectedCategory }
+        let list = bikeController.bikes.filter { selectedCategory == "All" ? true : $0.category == selectedCategory }
         return Array(list.prefix(3))
     }
 
@@ -67,22 +67,24 @@ struct HomeView: View {
                                     .foregroundStyle(.white)
                                 }
 
-                                Text(sampleBikes[0].name)
+                                Text(bikeController.bikes.first?.name ?? "No bikes available")
                                     .font(.system(size: 28, weight: .heavy))
                                     .foregroundStyle(.white)
 
-                                Text(sampleBikes[0].type)
+                                Text(bikeController.bikes.first?.type ?? "")
                                     .font(.system(size: 14, weight: .medium))
                                     .foregroundStyle(.white.opacity(0.8))
 
                                 HStack {
-                                    Text("₱\(Int(sampleBikes[0].price))")
+                                    Text("₱\(Int(bikeController.bikes.first?.price ?? 0))")
                                         .font(.system(size: 22, weight: .bold))
                                         .foregroundStyle(.white)
                                     Spacer()
                                     Button(action: {
-                                        selectedBike = sampleBikes[0]
-                                        showDetail = true
+                                        if let featuredBike = bikeController.bikes.first {
+                                            selectedBike = featuredBike
+                                            showDetail = true
+                                        }
                                     }) {
                                         HStack {
                                             Text("Shop now")

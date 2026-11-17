@@ -26,6 +26,20 @@ final class OrderController: ObservableObject {
         orders.filter { $0.status != "Cancelled" }.count
     }
 
+    func validateCartStock(_ cart: [CartItem], bikes: [Bike]) -> String? {
+        for item in cart {
+            guard let bike = bikes.first(where: { $0.id == item.bikeId }) else {
+                return "One or more products are no longer available."
+            }
+
+            if item.quantity > bike.stock {
+                return "\(bike.name) only has \(bike.stock) item(s) left in stock."
+            }
+        }
+
+        return nil
+    }
+
     func statusOptions() -> [String] {
         ["Pending", "Processing", "Shipped", "Completed", "Cancelled"]
     }
@@ -57,6 +71,7 @@ final class OrderController: ObservableObject {
             address: address,
             paymentMethod: paymentMethod
         )
+
         orders.insert(order, at: 0)
         save()
         return order

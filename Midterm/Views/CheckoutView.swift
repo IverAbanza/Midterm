@@ -157,6 +157,11 @@ struct CheckoutView: View {
             return
         }
 
+        if let stockIssue = orderController.validateCartStock(cartController.items, bikes: bikeController.bikes) {
+            errorMessage = stockIssue
+            return
+        }
+
         _ = orderController.createOrder(
             from: cartController.items,
             bikes: bikeController.bikes,
@@ -164,6 +169,10 @@ struct CheckoutView: View {
             address: trimmedAddress,
             paymentMethod: paymentMethod
         )
+
+        for item in cartController.items {
+            bikeController.reduceStock(for: item.bikeId, quantity: item.quantity)
+        }
 
         cartController.clear()
         errorMessage = ""

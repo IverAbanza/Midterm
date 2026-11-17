@@ -147,7 +147,27 @@ struct BikeDetailView: View {
                     }
 
                     Button {
-                        cartController?.add(bike: bike)
+                        guard let cartController else { return }
+                        guard let bikeController else { return }
+
+                        let currentQuantity = cartController.items.first(where: { $0.bikeId == bike.id })?.quantity ?? 0
+                        let availableStock = bikeController.bikes.first(where: { $0.id == bike.id })?.stock ?? 0
+
+                        guard availableStock > 0 else {
+                            withAnimation {
+                                addedToCart = false
+                            }
+                            return
+                        }
+
+                        guard currentQuantity < availableStock else {
+                            withAnimation {
+                                addedToCart = false
+                            }
+                            return
+                        }
+
+                        cartController.add(bike: bike)
                         withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
                             addedToCart = true
                         }

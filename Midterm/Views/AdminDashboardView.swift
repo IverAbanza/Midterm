@@ -10,8 +10,11 @@ struct AdminDashboardView: View {
     @State private var productSearch = ""
     @State private var orderSearch = ""
     @State private var productFilter = "All"
+    @State private var stockFilter = "All"
     @State private var orderFilter = "All"
     @State private var showingForm = false
+    @State private var selectedQuickAction: String? = nil
+
     private let tabs = ["Overview", "Inventory", "Orders", "Customers"]
     @State private var editingBike: Bike?
     @State private var draftName = ""
@@ -24,11 +27,22 @@ struct AdminDashboardView: View {
 
     private let statusOptions = ["All", "Pending", "Processing", "Shipped", "Completed", "Cancelled"]
 
+    private var inventoryFilters: [String] {
+        ["All", "In Stock", "Low Stock", "Out of Stock"]
+    }
+
     var filteredProducts: [Bike] {
         bikeController.bikes.filter { bike in
             let matchesSearch = productSearch.isEmpty || bike.name.lowercased().contains(productSearch.lowercased()) || bike.type.lowercased().contains(productSearch.lowercased())
-            let matchesFilter = productFilter == "All" || bike.category == productFilter
-            return matchesSearch && matchesFilter
+            let matchesCategory = productFilter == "All" || bike.category == productFilter
+            let matchesStock: Bool
+            switch stockFilter {
+            case "In Stock": matchesStock = bike.stock > 5
+            case "Low Stock": matchesStock = bike.stock > 0 && bike.stock <= 5
+            case "Out of Stock": matchesStock = bike.stock == 0
+            default: matchesStock = true
+            }
+            return matchesSearch && matchesCategory && matchesStock
         }
     }
 
@@ -40,36 +54,65 @@ struct AdminDashboardView: View {
         }
     }
 
+    var revenueTrendData: [(label: String, value: Double)] {
+        let calendar = Calendar.current
+        let today = Date()
+        let days = (0..<7).reversed().map { offset in
+            calendar.date(byAdding: .day, value: -offset, to: today) ?? today
+        }
+
+        return days.map { date in
+            let total = orderController.orders.filter {
+                calendar.isDate($0.createdAt, inSameDayAs: date)
+            }.reduce(0.0) { $0 + $1.total }
+            let label = date.formatted(.dateTime.day().month(.abbreviated))
+            return (label, total)
+        }
+    }
+
+    var lowStockProducts: [Bike] {
+        bikeController.lowStockBikes()
+    }
+
+    var recentOrders: [Order] {
+        Array(orderController.orders.prefix(4))
+    }
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 18) {
+            VStack(spacing: 14) {
                 header
 
                 HStack(spacing: 8) {
                     ForEach(Array(tabs.enumerated()), id: \.offset) { index, title in
-                        Button(action: { selectedTab = index }) {
+                        Button(action: { selectedTab = index; selectedQuickAction = nil }) {
                             Text(title)
-                                .font(.system(size: 12, weight: selectedTab == index ? .bold : .medium))
+                                .font(.system(size: 12, weight: selectedTab == index ? .bold : .semibold))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 10)
-                                .foregroundStyle(selectedTab == index ? .white : .secondary)
-                                .background(selectedTab == index ? Color(red: 0.07, green: 0.11, blue: 0.21) : Color(.systemGray6))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .foregroundStyle(selectedTab == index ? .white : AppTheme.mutedText)
+                                .background(selectedTab == index ? AppTheme.navy : Color(.systemGray6))
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
                     }
                 }
 
-                if selectedTab == 0 {
-                    overviewView
-                } else if selectedTab == 1 {
-                    productsView
-                } else if selectedTab == 2 {
-                    ordersView
-                } else {
-                    customersView
+                Group {
+                    switch selectedTab {
+                    case 0:
+                        overviewView
+                    case 1:
+                        productsView
+                    case 2:
+                        ordersView
+                    default:
+                        customersView
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .padding(18)
+            .background(Color(.systemGroupedBackground))
             .sheet(isPresented: $showingForm) {
                 productFormSheet
             }
@@ -77,139 +120,196 @@ struct AdminDashboardView: View {
     }
 
     private var header: some View {
-        HStack {
+        HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Admin Console")
                     .font(.system(size: 28, weight: .heavy))
+                    .foregroundStyle(AppTheme.navy)
                 Text("BikeStore Headquarters")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppTheme.mutedText)
             }
+
             Spacer()
-            Button(action: onLogout) {
-                Image(systemName: "rectangle.portrait.and.arrow.right")
-                    .foregroundStyle(.white)
+
+            ZStack {
+                Circle()
+                    .fill(AppTheme.navy.opacity(0.1))
                     .frame(width: 42, height: 42)
+                Image(systemName: "person.crop.circle.fill")
+                    .foregroundStyle(AppTheme.navy)
+                    .font(.system(size: 22, weight: .semibold))
+            }
+
+            Button(action: onLogout) {
+                Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .frame(height: 38)
+                    .foregroundStyle(.white)
                     .background(Color.red)
-                    .clipShape(Circle())
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
         }
     }
 
     private var overviewView: some View {
         ScrollView {
-            VStack(spacing: 18) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        MetricCard(title: "Revenue", value: "$\(Int(orderController.totalRevenue))", color: .green)
-                        MetricCard(title: "Orders", value: "\(orderController.totalSales)", color: .blue)
-                        MetricCard(title: "Customers", value: "\(userController.registeredCustomers().count)", color: .purple)
-                        MetricCard(title: "Inventory", value: "\(bikeController.bikes.count)", color: .orange)
-                    }
-                    .padding(.horizontal, 2)
+            VStack(spacing: 16) {
+                HStack(spacing: 12) {
+                    StatCard(title: "Total Revenue", value: formatCurrency(orderController.totalRevenue), icon: "dollarsign.circle.fill", color: .blue)
+                    StatCard(title: "Total Orders", value: "\(orderController.totalSales)", icon: "bag.fill", color: .green)
                 }
 
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Operational overview")
-                        .font(.system(size: 20, weight: .bold))
+                VStack(alignment: .leading, spacing: 12) {
+                    SectionHeader(title: "Operational overview", subtitle: "Live store status")
 
                     HStack(spacing: 12) {
-                        MiniStat(title: "Pending", value: "\(orderController.pendingOrders.count)", color: .orange)
-                        MiniStat(title: "Completed", value: "\(orderController.completedOrders.count)", color: .green)
-                        MiniStat(title: "Low Stock", value: "\(bikeController.lowStockBikes().count)", color: .red)
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Recent activity")
-                        .font(.system(size: 20, weight: .bold))
-
-                    ForEach(Array(orderController.orders.prefix(4).enumerated()), id: \.offset) { _, order in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(order.customerName)
-                                    .font(.system(size: 15, weight: .semibold))
-                                Text(order.id)
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            VStack(alignment: .trailing, spacing: 4) {
-                                Text(order.status)
-                                    .font(.system(size: 11, weight: .bold))
-                                    .foregroundStyle(statusColor(for: order.status))
-                                Text("$\(Int(order.total))")
-                                    .font(.system(size: 14, weight: .bold))
-                            }
+                        OperationCard(title: "Pending", value: "\(orderController.pendingOrders.count)", accent: .orange, icon: "clock.fill") {
+                            selectedTab = 2
+                            orderFilter = "Pending"
                         }
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        OperationCard(title: "Completed", value: "\(orderController.completedOrders.count)", accent: .green, icon: "checkmark.seal.fill") {
+                            selectedTab = 2
+                            orderFilter = "Completed"
+                        }
+                        OperationCard(title: "Low Stock", value: "\(lowStockProducts.count)", accent: .red, icon: "exclamationmark.triangle.fill") {
+                            selectedTab = 1
+                            stockFilter = "Low Stock"
+                        }
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    SectionHeader(title: "Revenue overview", subtitle: "Last 7 days")
+                    RevenueChartView(data: revenueTrendData)
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    SectionHeader(title: "Recent orders", subtitle: "Latest activity")
+
+                    if recentOrders.isEmpty {
+                        EmptyStateView(title: "No orders yet", message: "Orders will appear here when customers place them.", systemImage: "shippingbox")
+                    } else {
+                        ForEach(recentOrders, id: \.id) { order in
+                            OrderRowCard(order: order, statusColor: statusColor(for: order.status))
+                        }
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    SectionHeader(title: "Inventory alerts", subtitle: "Watchlist")
+
+                    if lowStockProducts.isEmpty {
+                        EmptyStateView(title: "Inventory healthy", message: "No bikes are currently running low on stock.", systemImage: "checkmark.circle.fill")
+                    } else {
+                        ForEach(lowStockProducts.prefix(3), id: \.id) { bike in
+                            Button(action: {
+                                selectedTab = 1
+                                productFilter = bike.category
+                            }) {
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                            .fill(bike.accent.opacity(0.14))
+                                            .frame(width: 46, height: 46)
+                                        Image(systemName: "bicycle")
+                                            .font(.system(size: 20, weight: .bold))
+                                            .foregroundStyle(bike.accent)
+                                    }
+
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(bike.name)
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundStyle(.primary)
+                                        Text("\(bike.stock) left in stock")
+                                            .font(.system(size: 12, weight: .medium))
+                                            .foregroundStyle(AppTheme.mutedText)
+                                    }
+
+                                    Spacer()
+
+                                    Text("Low")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 5)
+                                        .background(Color.red)
+                                        .clipShape(Capsule())
+                                }
+                                .padding(.vertical, 6)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    SectionHeader(title: "Quick actions", subtitle: "Management shortcuts")
+
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        QuickActionCard(icon: "plus.circle.fill", title: "Add Product", accent: AppTheme.blue) {
+                            openNewBikeForm()
+                        }
+                        QuickActionCard(icon: "shippingbox.fill", title: "View Orders", accent: .green) {
+                            selectedTab = 2
+                        }
+                        QuickActionCard(icon: "cube.box.fill", title: "Manage Inventory", accent: .orange) {
+                            selectedTab = 1
+                        }
+                        QuickActionCard(icon: "person.2.fill", title: "View Customers", accent: .purple) {
+                            selectedTab = 3
+                        }
                     }
                 }
             }
+            .padding(.bottom, 10)
         }
     }
 
     private var productsView: some View {
         VStack(spacing: 12) {
-            HStack {
+            HStack(spacing: 12) {
                 SearchBar(text: $productSearch, placeholder: "Search products")
                 Button(action: { openNewBikeForm() }) {
                     Image(systemName: "plus")
                         .frame(width: 42, height: 42)
-                        .background(Color(red: 0.07, green: 0.11, blue: 0.21))
+                        .background(AppTheme.navy)
                         .foregroundStyle(.white)
                         .clipShape(Circle())
                 }
             }
 
-            HStack {
-                Picker("Filter", selection: $productFilter) {
+            HStack(spacing: 10) {
+                Picker("Category", selection: $productFilter) {
                     let categories = ["All"] + bikeController.categories()
                     ForEach(categories, id: \.self) { category in
                         Text(category).tag(category)
                     }
                 }
                 .pickerStyle(.menu)
-                Spacer()
-            }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-            List(filteredProducts, id: \.id) { bike in
-                HStack(alignment: .center, spacing: 14) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(bike.accent.opacity(0.12))
-                            .frame(width: 58, height: 58)
-                        Image(systemName: "bicycle")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundStyle(bike.accent)
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(bike.name)
-                            .font(.system(size: 16, weight: .semibold))
-                        Text("\(bike.category) • \(bike.stock) in stock")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
-                        Text("$\(Int(bike.price))")
-                            .font(.system(size: 13, weight: .bold))
-                    }
-
-                    Spacer()
-
-                    Menu {
-                        Button("Edit") { openEditForm(for: bike) }
-                        Button("Delete", role: .destructive) { bikeController.deleteBike(id: bike.id) }
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .foregroundStyle(.primary)
+                Picker("Stock", selection: $stockFilter) {
+                    ForEach(inventoryFilters, id: \.self) { filter in
+                        Text(filter).tag(filter)
                     }
                 }
-                .padding(.vertical, 4)
+                .pickerStyle(.menu)
             }
-            .listStyle(.plain)
-            .frame(maxHeight: .infinity)
+
+            if filteredProducts.isEmpty {
+                EmptyStateView(title: "No products found", message: "Try changing your search or stock filter.", systemImage: "magnifyingglass")
+            } else {
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(filteredProducts, id: \.id) { bike in
+                            ProductRowCard(bike: bike, onEdit: { openEditForm(for: bike) }, onDelete: { bikeController.deleteBike(id: bike.id) })
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -224,44 +324,22 @@ struct AdminDashboardView: View {
             }
             .pickerStyle(.segmented)
 
-            ScrollView {
-                VStack(spacing: 12) {
-                    ForEach(filteredOrders, id: \.id) { order in
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text(order.id)
-                                    .font(.system(size: 15, weight: .bold))
-                                Spacer()
-                                Text(order.status)
-                                    .font(.system(size: 11, weight: .bold))
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(statusColor(for: order.status).opacity(0.15))
-                                    .foregroundStyle(statusColor(for: order.status))
-                                    .clipShape(Capsule())
-                            }
-                            Text(order.customerName)
-                                .foregroundStyle(.secondary)
-                            Text("Items: \(order.items.count) • Total: $\(Int(order.total))")
-                                .font(.system(size: 12, weight: .medium))
-
-                            Menu {
-                                ForEach(orderController.statusOptions(), id: \.self) { status in
-                                    Button(status) {
-                                        _ = orderController.updateStatus(orderId: order.id, to: status)
+            if filteredOrders.isEmpty {
+                EmptyStateView(title: "No matching orders", message: "No orders match the selected filters.", systemImage: "shippingbox")
+            } else {
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(filteredOrders, id: \.id) { order in
+                            OrderManagementCard(order: order, onStatusSelected: { newStatus in
+                                let previousStatus = order.status
+                                if newStatus == "Cancelled" && previousStatus != "Cancelled" {
+                                    for item in order.items {
+                                        bikeController.restoreStock(for: item.bikeId, quantity: item.quantity)
                                     }
                                 }
-                            } label: {
-                                Label("Update status", systemImage: "arrow.triangle.2.circlepath")
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 6)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(Color(.systemGray5))
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                            }
+                                _ = orderController.updateStatus(orderId: order.id, to: newStatus)
+                            })
                         }
-                        .padding(.vertical, 4)
                     }
                 }
             }
@@ -269,20 +347,18 @@ struct AdminDashboardView: View {
     }
 
     private var customersView: some View {
-        ScrollView {
-            VStack(spacing: 10) {
-                ForEach(userController.registeredCustomers(), id: \.id) { customer in
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(customer.fullName)
-                            .font(.system(size: 16, weight: .semibold))
-                        Text(customer.email)
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
-                        Text(customer.phone.isEmpty ? "No phone" : customer.phone)
-                            .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
+        VStack(spacing: 12) {
+            SearchBar(text: $orderSearch, placeholder: "Search customers")
+
+            if userController.registeredCustomers().isEmpty {
+                EmptyStateView(title: "No customers yet", message: "Customer profiles will appear here.", systemImage: "person.2.fill")
+            } else {
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(userController.registeredCustomers(), id: \.id) { customer in
+                            CustomerCard(customer: customer, orders: orderController.orders.filter { $0.customerName == customer.fullName })
+                        }
                     }
-                    .padding(.vertical, 4)
                 }
             }
         }
@@ -333,15 +409,15 @@ struct AdminDashboardView: View {
                     TextField("Accent HEX", text: $draftAccent)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Color(.systemGroupedBackground))
             .navigationTitle(editingBike == nil ? "New bike" : "Edit bike")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { showingForm = false }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        saveProduct()
-                    }
+                    Button("Save") { saveProduct() }
                 }
             }
         }
@@ -387,44 +463,427 @@ struct AdminDashboardView: View {
         default: return .gray
         }
     }
-}
 
-private struct MetricCard: View {
-    let title: String
-    let value: String
-    let color: Color
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.system(size: 24, weight: .heavy))
-        }
-        .frame(width: 150, alignment: .leading)
-        .padding()
-        .background(color.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+    private func formatCurrency(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.locale = Locale(identifier: "en_PH")
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "PHP"
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: value)) ?? "₱0"
     }
 }
 
-private struct MiniStat: View {
+private struct SectionHeader: View {
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        HStack(alignment: .bottom) {
+            Text(title)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(AppTheme.navy)
+            Spacer()
+            Text(subtitle)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(AppTheme.mutedText)
+        }
+    }
+}
+
+private struct StatCard: View {
     let title: String
     let value: String
+    let icon: String
     let color: Color
 
     var body: some View {
-        VStack {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(color)
+                Spacer()
+                Text(title)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(AppTheme.mutedText)
+            }
+
             Text(value)
-                .font(.system(size: 22, weight: .heavy))
-            Text(title)
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: 25, weight: .heavy))
+                .foregroundStyle(AppTheme.navy)
         }
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: 110)
+        .background(Color(.white))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
+    }
+}
+
+private struct OperationCard: View {
+    let title: String
+    let value: String
+    let accent: Color
+    let icon: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Image(systemName: icon)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(accent)
+                    Spacer()
+                    Text(value)
+                        .font(.system(size: 22, weight: .heavy))
+                        .foregroundStyle(AppTheme.navy)
+                }
+                Text(title)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(AppTheme.mutedText)
+            }
+            .frame(maxWidth: .infinity, minHeight: 92)
+            .padding(14)
+            .background(Color(.white))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct RevenueChartView: View {
+    let data: [(label: String, value: Double)]
+
+    var maxValue: Double {
+        max(data.reduce(0.0) { max($0, $1.value) }, 1.0)
+    }
+
+    var body: some View {
+        VStack(spacing: 14) {
+            HStack(alignment: .bottom, spacing: 10) {
+                ForEach(data, id: \.label) { item in
+                    VStack(spacing: 6) {
+                        ZStack(alignment: .bottom) {
+                            Capsule()
+                                .fill(Color(.systemGray5))
+                                .frame(width: 18, height: 120)
+                            Capsule()
+                                .fill(LinearGradient(colors: [AppTheme.blue, AppTheme.navy], startPoint: .bottom, endPoint: .top))
+                                .frame(width: 18, height: max(10, (item.value / maxValue) * 110))
+                        }
+                        .frame(height: 120)
+
+                        Text(item.label)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(AppTheme.mutedText)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(14)
+            .background(Color(.white))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
+        }
+    }
+}
+
+private struct OrderRowCard: View {
+    let order: Order
+    let statusColor: Color
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(statusColor.opacity(0.12))
+                    .frame(width: 42, height: 42)
+                Image(systemName: "bag.fill")
+                    .foregroundStyle(statusColor)
+                    .font(.system(size: 16, weight: .bold))
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(order.customerName)
+                        .font(.system(size: 14, weight: .semibold))
+                    Spacer()
+                    Text(order.status)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(statusColor)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(statusColor.opacity(0.12))
+                        .clipShape(Capsule())
+                }
+                Text(order.id)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(AppTheme.mutedText)
+                Text(order.createdAt.formatted(date: .abbreviated, time: .shortened))
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(AppTheme.mutedText)
+                HStack {
+                    Text("Total")
+                        .foregroundStyle(AppTheme.mutedText)
+                    Spacer()
+                    Text("₱\(Int(order.total))")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(AppTheme.navy)
+                }
+            }
+        }
+        .padding(12)
+        .background(Color(.white))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
+    }
+}
+
+private struct QuickActionCard: View {
+    let icon: String
+    let title: String
+    let accent: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(accent)
+                    .frame(width: 42, height: 42)
+                    .background(accent.opacity(0.12))
+                    .clipShape(Circle())
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(AppTheme.navy)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Color(.white))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct ProductRowCard: View {
+    let bike: Bike
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+
+    var stockStyle: Color {
+        if bike.stock == 0 { return .red }
+        if bike.stock <= 5 { return .orange }
+        return .green
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(bike.accent.opacity(0.14))
+                    .frame(width: 56, height: 56)
+                Image(systemName: "bicycle")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(bike.accent)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(bike.name)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(AppTheme.navy)
+
+                Text(bike.category)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(AppTheme.mutedText)
+
+                HStack(spacing: 8) {
+                    Text("₱\(Int(bike.price))")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(AppTheme.navy)
+                    Spacer()
+                    Text(stockLabel)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(stockStyle)
+                        .clipShape(Capsule())
+                }
+            }
+
+            Spacer()
+
+            VStack(spacing: 8) {
+                Button { onEdit() } label: {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 14, weight: .bold))
+                        .frame(width: 28, height: 28)
+                        .foregroundStyle(AppTheme.navy)
+                        .background(Color(.systemGray6))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+
+                Button(role: .destructive) { onDelete() } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 14, weight: .bold))
+                        .frame(width: 28, height: 28)
+                        .foregroundStyle(.white)
+                        .background(Color.red)
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(12)
         .frame(maxWidth: .infinity)
-        .padding()
-        .background(color.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .background(Color(.white))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
+    }
+
+    var stockLabel: String {
+        if bike.stock == 0 { return "Out" }
+        if bike.stock <= 5 { return "Low" }
+        return "In" 
+    }
+}
+
+private struct OrderManagementCard: View {
+    let order: Order
+    let onStatusSelected: (String) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(order.id)
+                    .font(.system(size: 15, weight: .bold))
+                Spacer()
+                Text(order.status)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(statusColor(for: order.status))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(statusColor(for: order.status).opacity(0.12))
+                    .clipShape(Capsule())
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(order.customerName)
+                    .font(.system(size: 13, weight: .semibold))
+                Text(order.createdAt.formatted(date: .abbreviated, time: .shortened))
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(AppTheme.mutedText)
+                HStack {
+                    Text("Total")
+                        .foregroundStyle(AppTheme.mutedText)
+                    Spacer()
+                    Text("₱\(Int(order.total))")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(AppTheme.navy)
+                }
+            }
+
+            Menu {
+                ForEach(["Pending", "Processing", "Shipped", "Completed", "Cancelled"], id: \.self) { status in
+                    Button(status) { onStatusSelected(status) }
+                }
+            } label: {
+                HStack {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                    Text("Update status")
+                }
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(AppTheme.navy)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 9)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.systemGray6))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .background(Color(.white))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
+    }
+
+    private func statusColor(for status: String) -> Color {
+        switch status {
+        case "Pending": return .orange
+        case "Processing": return .blue
+        case "Shipped": return .purple
+        case "Completed": return .green
+        case "Cancelled": return .red
+        default: return .gray
+        }
+    }
+}
+
+private struct CustomerCard: View {
+    let customer: User
+    let orders: [Order]
+
+    var totalSpent: Double {
+        orders.reduce(0) { $0 + $1.total }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center) {
+                ZStack {
+                    Circle()
+                        .fill(AppTheme.navy.opacity(0.12))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "person.fill")
+                        .foregroundStyle(AppTheme.navy)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(customer.fullName)
+                        .font(.system(size: 15, weight: .bold))
+                    Text("\(orders.count) orders")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(AppTheme.mutedText)
+                }
+
+                Spacer()
+
+                Text(formatCurrency(totalSpent))
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(AppTheme.navy)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(customer.email)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(AppTheme.mutedText)
+                Text(customer.phone.isEmpty ? "No phone number saved" : customer.phone)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(AppTheme.mutedText)
+            }
+        }
+        .padding(14)
+        .background(Color(.white))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
+    }
+
+    private func formatCurrency(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.locale = Locale(identifier: "en_PH")
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "PHP"
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: value)) ?? "₱0"
     }
 }
 
