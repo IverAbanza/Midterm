@@ -47,7 +47,7 @@ final class UserController: ObservableObject {
             return (false, "Passwords do not match.")
         }
 
-        let user = User(id: UUID(), fullName: fullName, email: email, phone: "", password: password, role: "customer")
+        let user = User(id: UUID(), fullName: fullName, email: email, phone: "", address: "", password: password, role: "customer")
         currentUser = user
         isLoggedIn = true
         saveUser(user)
@@ -68,6 +68,7 @@ final class UserController: ObservableObject {
                 fullName: "BikeStore Admin",
                 email: adminEmail,
                 phone: "+1 (800) 555-0199",
+                address: "HQ, 24 Bike Avenue",
                 password: adminPassword,
                 role: "admin"
             )
@@ -101,7 +102,7 @@ final class UserController: ObservableObject {
             return (false, "Full name and email are required.")
         }
 
-        let updated = User(id: user.id, fullName: fullName, email: email, phone: phone, password: user.password, role: user.role)
+        let updated = User(id: user.id, fullName: fullName, email: email, phone: phone, address: user.address, password: user.password, role: user.role)
         currentUser = updated
         saveUser(updated)
         return (true, "Profile updated successfully.")

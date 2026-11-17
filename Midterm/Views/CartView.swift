@@ -3,6 +3,11 @@ import SwiftUI
 struct CartView: View {
     @ObservedObject var cartController: CartController
     @ObservedObject var bikeController: BikeController
+    @ObservedObject var userController: UserController
+    @ObservedObject var orderController: OrderController
+
+    @State private var isShowingCheckout = false
+    @State private var showOrderPlacedAlert = false
 
     var body: some View {
         NavigationStack {
@@ -105,7 +110,7 @@ struct CartView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
                         Button {
-                            print("Checkout tapped")
+                            isShowingCheckout = true
                         } label: {
                             Text("Proceed to Checkout")
                                 .font(.system(size: 16, weight: .bold))
@@ -128,9 +133,31 @@ struct CartView: View {
                 .navigationTitle("Cart")
             }
         }
+        .sheet(isPresented: $isShowingCheckout) {
+            CheckoutView(
+                cartController: cartController,
+                bikeController: bikeController,
+                userController: userController,
+                orderController: orderController,
+                onOrderPlaced: {
+                    isShowingCheckout = false
+                    showOrderPlacedAlert = true
+                }
+            )
+        }
+        .alert("Order placed", isPresented: $showOrderPlacedAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Your bike order has been placed successfully.")
+        }
     }
 }
 
 #Preview {
-    CartView(cartController: CartController(), bikeController: BikeController())
+    CartView(
+        cartController: CartController(),
+        bikeController: BikeController(),
+        userController: UserController(),
+        orderController: OrderController()
+    )
 }

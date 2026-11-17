@@ -10,7 +10,16 @@ struct ContentView: View {
     @State private var isShowingSignUp = false
 
     var body: some View {
-        if userController.isLoggedIn && userController.isAdmin {
+        if !userController.onboardingCompleted {
+            OnboardingView(
+                onComplete: {
+                    userController.completeOnboarding()
+                },
+                onSkip: {
+                    userController.completeOnboarding()
+                }
+            )
+        } else if userController.isLoggedIn && userController.isAdmin {
             AdminDashboardView(
                 bikeController: bikeController,
                 orderController: orderController,
@@ -33,11 +42,16 @@ struct ContentView: View {
                     .tag(2)
                     .tabItem { Label("Favorites", systemImage: "heart.fill") }
 
-                CartView(cartController: cartController, bikeController: bikeController)
-                    .tag(3)
-                    .tabItem { Label("Cart", systemImage: "cart.fill") }
+                CartView(
+                    cartController: cartController,
+                    bikeController: bikeController,
+                    userController: userController,
+                    orderController: orderController
+                )
+                .tag(3)
+                .tabItem { Label("Cart", systemImage: "cart.fill") }
 
-                SettingsView(userController: userController)
+                SettingsView(userController: userController, orderController: orderController)
                     .tag(4)
                     .tabItem { Label("Settings", systemImage: "gearshape.fill") }
             }

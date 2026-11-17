@@ -9,6 +9,7 @@ struct SupabaseProfile: Codable {
     let fullName: String
     let email: String
     let phone: String?
+    let address: String?
     let role: String
 
     enum CodingKeys: String, CodingKey {
@@ -16,6 +17,7 @@ struct SupabaseProfile: Codable {
         case fullName = "full_name"
         case email
         case phone
+        case address
         case role
     }
 
@@ -25,6 +27,7 @@ struct SupabaseProfile: Codable {
             fullName: fullName,
             email: email,
             phone: phone ?? "",
+            address: address ?? "",
             password: password,
             role: role
         )
@@ -134,6 +137,7 @@ final class SupabaseService {
             fullName: fullName,
             email: email,
             phone: "",
+            address: "",
             password: password,
             role: SupabaseConfig.customerRole
         )

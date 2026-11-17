@@ -5,6 +5,7 @@ struct User: Identifiable, Codable, Hashable {
     var fullName: String
     var email: String
     var phone: String
+    var address: String = ""
     var password: String
     var role: String = "customer"
 

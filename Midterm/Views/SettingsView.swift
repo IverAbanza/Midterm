@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var userController: UserController
+    @ObservedObject var orderController: OrderController
 
     @State private var pushNotifications = true
     @State private var orderUpdates = true
@@ -43,6 +44,24 @@ struct SettingsView: View {
                         ToggleRow(title: "Order updates", isOn: $orderUpdates)
                         ToggleRow(title: "Dark mode", isOn: $darkMode)
                         ToggleRow(title: "Location access", isOn: $locationAccess)
+                    }
+
+                    settingsSection(title: "Account") {
+                        NavigationLink(destination: OrdersView(orders: orderController.orders)) {
+                            HStack {
+                                Image(systemName: "shippingbox.fill")
+                                    .frame(width: 24)
+                                    .foregroundStyle(AppTheme.navy)
+                                Text("My Orders")
+                                    .font(.system(size: 15, weight: .medium))
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(AppTheme.mutedText)
+                            }
+                            .padding(.horizontal)
+                            .padding(.vertical, 12)
+                            .foregroundStyle(.primary)
+                        }
                     }
 
                     settingsSection(title: "Support") {
@@ -146,5 +165,5 @@ private struct SettingLinkRow: View {
 }
 
 #Preview {
-    SettingsView(userController: UserController())
+    SettingsView(userController: UserController(), orderController: OrderController())
 }
