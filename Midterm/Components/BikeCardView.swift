@@ -4,29 +4,43 @@ struct BikeCardView: View {
     let bike: Bike
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(bike.accent.opacity(0.18))
-                    .frame(height: 170)
+        VStack(alignment: .leading, spacing: 10) {
+            ZStack(alignment: .topTrailing) {
+                BikeArtwork(bike: bike, height: 170)
 
-                Image(systemName: "bicycle")
-                    .font(.system(size: 52, weight: .bold))
-                    .foregroundStyle(bike.accent)
+                HStack(spacing: 4) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 10, weight: .bold))
+                    Text(String(format: "%.1f", bike.rating))
+                        .font(.system(size: 11, weight: .semibold))
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .foregroundStyle(.white)
+                .background(Color.black.opacity(0.22))
+                .clipShape(Capsule())
+                .padding(10)
             }
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(bike.name)
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text(bike.type)
-                    .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(AppTheme.mutedText)
+                    .lineLimit(1)
 
-                HStack {
-                    Text("₱\(Int(bike.price))")
-                        .font(.system(size: 18, weight: .bold))
+                HStack(alignment: .center, spacing: 8) {
+                    Text("₱\(String(format: "%.0f", bike.price))")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(AppTheme.navy)
+
                     Spacer()
+
                     Image(systemName: "arrow.right")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(.secondary)

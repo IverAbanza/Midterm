@@ -98,155 +98,33 @@ struct PrimaryButton: View {
 
 struct BikeArtwork: View {
     let bike: Bike
+    let height: CGFloat
 
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(LinearGradient(
-                    colors: [bike.accent.opacity(0.26), bike.accent.opacity(0.10), .white],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ))
-                .frame(height: 170)
-                .shadow(color: bike.accent.opacity(0.18), radius: 18, x: 0, y: 12)
-
-            Circle()
-                .fill(.white.opacity(0.18))
-                .frame(width: 150, height: 150)
-                .offset(x: -36, y: 20)
-
-            VStack(alignment: .center, spacing: 0) {
-                ZStack {
-                    BikeWheelVisual(color: bike.accent)
-                        .frame(width: 74, height: 74)
-                        .offset(x: -86, y: 46)
-
-                    BikeWheelVisual(color: bike.accent)
-                        .frame(width: 74, height: 74)
-                        .offset(x: 86, y: 46)
-
-                    BikeFrameVisual(color: bike.accent)
-                        .frame(width: 220, height: 120)
-                        .offset(y: -8)
-
-                    Group {
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(Color.black.opacity(0.75))
-                            .frame(width: 12, height: 52)
-                            .offset(x: 28, y: -42)
-
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(Color.black.opacity(0.75))
-                            .frame(width: 10, height: 42)
-                            .rotationEffect(.degrees(18))
-                            .offset(x: 72, y: -66)
-
-                        Circle()
-                            .fill(bike.accent)
-                            .frame(width: 16, height: 16)
-                            .offset(x: -18, y: -15)
-
-                        Circle()
-                            .fill(Color.black.opacity(0.8))
-                            .frame(width: 14, height: 14)
-                            .offset(x: 32, y: -22)
-                    }
-                    .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 6)
-                }
-            }
-        }
+    init(bike: Bike, height: CGFloat = 180) {
+        self.bike = bike
+        self.height = height
     }
-}
-
-private struct BikeWheelVisual: View {
-    let color: Color
 
     var body: some View {
         ZStack {
-            Circle()
-                .fill(Color.black.opacity(0.10))
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [bike.accent.opacity(0.22), bike.accent.opacity(0.08), .white],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(height: height)
+                .shadow(color: bike.accent.opacity(0.16), radius: 18, x: 0, y: 12)
 
-            Circle()
-                .stroke(Color.black.opacity(0.75), lineWidth: 6)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            Circle()
-                .stroke(Color.white.opacity(0.7), lineWidth: 2)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(12)
-
-            ForEach(0..<8, id: \.self) { index in
-                Rectangle()
-                    .fill(Color.black.opacity(0.7))
-                    .frame(width: 2, height: 20)
-                    .rotationEffect(.degrees(Double(index) * 45))
-                    .offset(y: -22)
-            }
-
-            Circle()
-                .fill(color)
-                .frame(width: 12, height: 12)
-        }
-    }
-}
-
-private struct BikeFrameVisual: View {
-    let color: Color
-
-    var body: some View {
-        ZStack {
-            Capsule()
-                .fill(color)
-                .frame(width: 118, height: 8)
-                .rotationEffect(.degrees(-20))
-                .offset(x: -8, y: -10)
-
-            Capsule()
-                .fill(color)
-                .frame(width: 120, height: 8)
-                .rotationEffect(.degrees(17))
-                .offset(x: 18, y: 10)
-
-            Capsule()
-                .fill(color)
-                .frame(width: 88, height: 8)
-                .rotationEffect(.degrees(2))
-                .offset(x: 8, y: 22)
-
-            Capsule()
-                .fill(color)
-                .frame(width: 94, height: 8)
-                .rotationEffect(.degrees(-52))
-                .offset(x: -34, y: 12)
-
-            Capsule()
-                .fill(color)
-                .frame(width: 78, height: 8)
-                .rotationEffect(.degrees(62))
-                .offset(x: 42, y: -6)
-
-            RoundedRectangle(cornerRadius: 5, style: .continuous)
-                .fill(Color.black.opacity(0.72))
-                .frame(width: 14, height: 56)
-                .rotationEffect(.degrees(-20))
-                .offset(x: -46, y: -48)
-
-            Capsule()
-                .fill(color)
-                .frame(width: 124, height: 7)
-                .rotationEffect(.degrees(82))
-                .offset(x: 36, y: 23)
-
-            Circle()
-                .fill(color)
-                .frame(width: 18, height: 18)
-                .offset(x: -12, y: -12)
-
-            Circle()
-                .fill(color)
-                .frame(width: 16, height: 16)
-                .offset(x: 52, y: 46)
+            Image(bike.imageName)
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: .infinity, maxHeight: height - 18)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 8)
+                .accessibilityLabel("\(bike.name) image")
         }
     }
 }
@@ -257,9 +135,9 @@ struct BikeCard: View {
     let action: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             ZStack(alignment: .topTrailing) {
-                BikeArtwork(bike: bike)
+                BikeArtwork(bike: bike, height: 170)
 
                 HStack(spacing: 4) {
                     Image(systemName: "star.fill")
@@ -275,19 +153,24 @@ struct BikeCard: View {
                 .padding(10)
             }
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(bike.name)
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.primary)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text(bike.type)
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(AppTheme.mutedText)
+                    .lineLimit(1)
 
-                HStack {
-                    Text("₱\(Int(bike.price))")
+                HStack(alignment: .center, spacing: 8) {
+                    Text("₱\(String(format: "%.0f", bike.price))")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(AppTheme.navy)
+                        .lineLimit(1)
 
                     Spacer()
 
@@ -295,15 +178,17 @@ struct BikeCard: View {
                         Image(systemName: "cart.fill")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(.white)
-                            .padding(9)
+                            .frame(width: 32, height: 32)
                             .background(AppTheme.navy)
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 8)

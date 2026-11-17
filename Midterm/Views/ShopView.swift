@@ -82,7 +82,13 @@ struct ShopView: View {
                         EmptyStateView(title: "No bikes found", message: "Try another keyword or category.", systemImage: "magnifyingglass")
                     } else {
                         ScrollView {
-                            LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 14) {
+                            LazyVGrid(
+                                columns: [
+                                    GridItem(.flexible(), spacing: 14),
+                                    GridItem(.flexible(), spacing: 14)
+                                ],
+                                spacing: 14
+                            ) {
                                 ForEach(filteredBikes, id: \.id) { bike in
                                     BikeCard(
                                         bike: bike,
@@ -94,8 +100,10 @@ struct ShopView: View {
                                             cartController.add(bike: bike)
                                         }
                                     )
+                                    .frame(maxWidth: .infinity)
                                 }
                             }
+                            .padding(.bottom, 90)
                         }
                     }
                 }
