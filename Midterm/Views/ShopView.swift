@@ -97,7 +97,7 @@ struct ShopView: View {
                                             showDetail = true
                                         },
                                         action: {
-                                            cartController.add(bike: bike)
+                                            cartController.add(bike: bike, maxStock: bike.stock)
                                         }
                                     )
                                     .frame(maxWidth: .infinity)

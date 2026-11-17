@@ -47,7 +47,7 @@ struct SettingsView: View {
                     }
 
                     settingsSection(title: "Account") {
-                        NavigationLink(destination: OrdersView(orders: orderController.orders)) {
+                        NavigationLink(destination: OrdersView(orders: orderController.userOrders(for: userController.currentUser))) {
                             HStack {
                                 Image(systemName: "shippingbox.fill")
                                     .frame(width: 24)

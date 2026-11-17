@@ -10,11 +10,16 @@ final class CartController: ObservableObject {
         load()
     }
 
-    func add(bike: Bike) {
+    func add(bike: Bike, maxStock: Int? = nil) {
+        let limit = maxStock ?? Int.max
         if let index = items.firstIndex(where: { $0.bikeId == bike.id }) {
-            items[index].quantity += 1
+            let nextQuantity = min(items[index].quantity + 1, limit)
+            if nextQuantity <= 0 { return }
+            items[index].quantity = nextQuantity
         } else {
-            items.append(CartItem(bikeId: bike.id, quantity: 1))
+            let initialQuantity = min(1, limit)
+            if initialQuantity <= 0 { return }
+            items.append(CartItem(bikeId: bike.id, quantity: initialQuantity))
         }
         save()
     }

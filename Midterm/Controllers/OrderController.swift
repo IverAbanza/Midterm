@@ -26,6 +26,14 @@ final class OrderController: ObservableObject {
         orders.filter { $0.status != "Cancelled" }.count
     }
 
+    func userOrders(for user: User?) -> [Order] {
+        guard let user else { return [] }
+        let email = user.email.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        return orders.filter {
+            ($0.customerId == user.id) || ($0.customerEmail.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == email)
+        }
+    }
+
     func validateCartStock(_ cart: [CartItem], bikes: [Bike]) -> String? {
         for item in cart {
             guard let bike = bikes.first(where: { $0.id == item.bikeId }) else {
@@ -68,6 +76,8 @@ final class OrderController: ObservableObject {
             shipping: shipping,
             total: total,
             customerName: user.fullName,
+            customerEmail: user.email,
+            customerId: user.id,
             address: address,
             paymentMethod: paymentMethod
         )
@@ -96,6 +106,8 @@ final class OrderController: ObservableObject {
             shipping: orders[index].shipping,
             total: orders[index].total,
             customerName: orders[index].customerName,
+            customerEmail: orders[index].customerEmail,
+            customerId: orders[index].customerId,
             address: orders[index].address,
             paymentMethod: orders[index].paymentMethod
         )
@@ -117,6 +129,8 @@ final class OrderController: ObservableObject {
             shipping: orders[index].shipping,
             total: orders[index].total,
             customerName: orders[index].customerName,
+            customerEmail: orders[index].customerEmail,
+            customerId: orders[index].customerId,
             address: orders[index].address,
             paymentMethod: orders[index].paymentMethod
         )

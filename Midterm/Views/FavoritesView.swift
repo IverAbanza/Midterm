@@ -6,10 +6,7 @@ struct FavoritesView: View {
     @ObservedObject var userController: UserController
 
     var favoriteBikes: [Bike] {
-        let favoriteIds = UserDefaults.standard.array(forKey: "bikeStore.favorites") as? [String] ?? []
-        return bikeController.bikes.filter { bike in
-            favoriteIds.contains(bike.id.uuidString)
-        }
+        userController.favoriteBikes(in: bikeController.bikes)
     }
 
     var body: some View {
@@ -37,21 +34,34 @@ struct FavoritesView: View {
                                     Text(bike.type)
                                         .font(.system(size: 12, weight: .medium))
                                         .foregroundStyle(AppTheme.mutedText)
-                                    Text("$\(Int(bike.price))")
+                                    Text("₱\(Int(bike.price))")
                                         .font(.system(size: 17, weight: .heavy))
                                         .foregroundStyle(AppTheme.navy)
                                 }
 
                                 Spacer()
 
-                                Button(action: {
-                                    cartController.add(bike: bike)
-                                }) {
-                                    Image(systemName: "cart.fill")
-                                        .foregroundStyle(.white)
-                                        .padding(10)
-                                        .background(AppTheme.navy)
-                                        .clipShape(Circle())
+                                VStack(spacing: 8) {
+                                    Button(action: {
+                                        cartController.add(bike: bike, maxStock: bike.stock)
+                                    }) {
+                                        Image(systemName: "cart.fill")
+                                            .foregroundStyle(.white)
+                                            .padding(10)
+                                            .background(AppTheme.navy)
+                                            .clipShape(Circle())
+                                    }
+
+                                    Button(action: {
+                                        _ = userController.toggleFavorite(bike.id)
+                                    }) {
+                                        Image(systemName: "heart.fill")
+                                            .foregroundStyle(.red)
+                                            .font(.system(size: 13, weight: .bold))
+                                            .padding(10)
+                                            .background(Color.red.opacity(0.12))
+                                            .clipShape(Circle())
+                                    }
                                 }
                             }
                             .padding()

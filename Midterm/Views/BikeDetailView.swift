@@ -9,6 +9,7 @@ struct BikeDetailView: View {
     @State private var selectedColor: String
     @State private var selectedSize: String
     @State private var addedToCart = false
+    @State private var isFavorite = false
 
     init(
         bike: Bike,
@@ -31,17 +32,32 @@ struct BikeDetailView: View {
                     BikeArtwork(bike: bike)
                         .frame(height: 290)
 
-                    HStack(spacing: 4) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 10, weight: .bold))
-                        Text(String(format: "%.1f", bike.rating))
-                            .font(.system(size: 12, weight: .bold))
+                    VStack(spacing: 10) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 10, weight: .bold))
+                            Text(String(format: "%.1f", bike.rating))
+                                .font(.system(size: 12, weight: .bold))
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .foregroundStyle(.white)
+                        .background(Color.black.opacity(0.22))
+                        .clipShape(Capsule())
+
+                        Button {
+                            guard let userController else { return }
+                            isFavorite = userController.toggleFavorite(bike.id)
+                        } label: {
+                            Image(systemName: isFavorite ? "heart.fill" : "heart")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundStyle(isFavorite ? .red : .white)
+                                .frame(width: 36, height: 36)
+                                .background(Color.black.opacity(0.22))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
-                    .foregroundStyle(.white)
-                    .background(Color.black.opacity(0.22))
-                    .clipShape(Capsule())
                     .padding(16)
                 }
 
@@ -167,7 +183,7 @@ struct BikeDetailView: View {
                             return
                         }
 
-                        cartController.add(bike: bike)
+                        cartController.add(bike: bike, maxStock: bike.stock)
                         withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
                             addedToCart = true
                         }
@@ -202,6 +218,9 @@ struct BikeDetailView: View {
         }
         .navigationTitle("Bike Details")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            isFavorite = userController?.isFavorite(bike.id) ?? false
+        }
     }
 }
 

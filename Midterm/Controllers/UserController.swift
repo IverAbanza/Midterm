@@ -2,6 +2,10 @@ import Foundation
 import Combine
 
 final class UserController: ObservableObject {
+    static let adminEmail = User.adminEmail
+    static let adminRole = User.adminRole
+    static let customerRole = User.customerRole
+
     @Published var currentUser: User?
     @Published var isLoggedIn: Bool
     @Published var onboardingCompleted: Bool
@@ -10,8 +14,11 @@ final class UserController: ObservableObject {
         currentUser?.isAdmin == true
     }
 
-    private let userKey = "bikeStore.user"
+    private let legacyUserKey = "bikeStore.user"
+    private let usersKey = "bikeStore.users"
+    private let favoritesKey = "bikeStore.favorites"
     private let loginKey = "bikeStore.loggedin"
+    private let activeUserEmailKey = "bikeStore.activeUserEmail"
     private let onboardingKey = "bikeStore.onboarding"
 
     init() {
@@ -20,12 +27,45 @@ final class UserController: ObservableObject {
         self.onboardingCompleted = UserDefaults.standard.bool(forKey: onboardingKey)
     }
 
-    static func loadSavedUser() -> User? {
-        guard let data = UserDefaults.standard.data(forKey: "bikeStore.user"),
-              let decoded = try? JSONDecoder().decode(User.self, from: data) else {
-            return nil
+    static func normalizedEmail(_ email: String) -> String {
+        email.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    static func normalizedRole(_ value: String?) -> String {
+        (value ?? customerRole).lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    static func loadSavedUsers() -> [User] {
+        if let data = UserDefaults.standard.data(forKey: "bikeStore.users"),
+           let decoded = try? JSONDecoder().decode([User].self, from: data),
+           !decoded.isEmpty {
+            return decoded
         }
-        return decoded
+
+        if let legacyData = UserDefaults.standard.data(forKey: "bikeStore.user"),
+           let decoded = try? JSONDecoder().decode(User.self, from: legacyData) {
+            return [decoded]
+        }
+
+        return []
+    }
+
+    static func loadSavedUser() -> User? {
+        let activeEmail = UserDefaults.standard.string(forKey: "bikeStore.activeUserEmail")?.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let users = loadSavedUsers()
+
+        if let activeEmail, let match = users.first(where: { Self.normalizedEmail($0.email) == activeEmail }) {
+            return match
+        }
+
+        return users.first
+    }
+
+    static func isAuthorizedAdminUser(_ user: User?) -> Bool {
+        guard let user else { return false }
+        let normalizedEmail = normalizedEmail(user.email)
+        let normalizedRole = normalizedRole(user.role)
+        return normalizedEmail == adminEmail && normalizedRole == adminRole
     }
 
     func signUp(fullName: String, email: String, password: String, confirmPassword: String) -> (Bool, String) {
@@ -33,8 +73,18 @@ final class UserController: ObservableObject {
             return (false, "Please fill in all fields.")
         }
 
-        if !email.contains("@") || !email.contains(".") {
+        let normalizedEmail = Self.normalizedEmail(email)
+
+        if !normalizedEmail.contains("@") || !normalizedEmail.contains(".") {
             return (false, "Enter a valid email address.")
+        }
+
+        if normalizedEmail == Self.adminEmail {
+            return (false, "The admin account is reserved for the authorized BikeStore administrator.")
+        }
+
+        if Self.loadSavedUsers().contains(where: { Self.normalizedEmail($0.email) == normalizedEmail }) {
+            return (false, "An account with this email already exists.")
         }
 
         if password.count < 6 {
@@ -45,16 +95,23 @@ final class UserController: ObservableObject {
             return (false, "Passwords do not match.")
         }
 
-        let isFirstAccount = Self.loadSavedUser() == nil
-        let role = isFirstAccount ? "admin" : "customer"
-        let user = User(id: UUID(), fullName: fullName, email: email, phone: "", address: "", password: password, role: role)
+        let user = User(
+            id: UUID(),
+            fullName: fullName,
+            email: normalizedEmail,
+            phone: "",
+            address: "",
+            password: password,
+            role: Self.customerRole
+        )
 
         currentUser = user
         isLoggedIn = true
         saveUser(user)
+        UserDefaults.standard.set(normalizedEmail, forKey: activeUserEmailKey)
         UserDefaults.standard.set(true, forKey: loginKey)
 
-        return (true, isFirstAccount ? "Admin account created successfully." : "Account created successfully.")
+        return (true, "Account created successfully.")
     }
 
     func signIn(email: String, password: String) -> (Bool, String) {
@@ -62,22 +119,47 @@ final class UserController: ObservableObject {
             return (false, "Email and password are required.")
         }
 
-        let normalizedEmail = email.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedEmail = Self.normalizedEmail(email)
+        let matchingUsers = Self.loadSavedUsers().filter { Self.normalizedEmail($0.email) == normalizedEmail }
 
-        if let savedUser = Self.loadSavedUser(), savedUser.email.lowercased() == normalizedEmail && savedUser.password == password {
-            currentUser = savedUser
-            isLoggedIn = true
-            UserDefaults.standard.set(true, forKey: loginKey)
-            return (true, savedUser.isAdmin ? "Admin login successful." : "Login successful.")
+        guard let savedUser = matchingUsers.first else {
+            if normalizedEmail == Self.adminEmail {
+                return (false, "No authorized admin account is configured for this app. Provision the admin account securely through the existing authentication system.")
+            }
+            return (false, "Invalid email or password.")
         }
 
-        return (false, "Invalid email or password.")
+        guard savedUser.password == password else {
+            return (false, "Invalid email or password.")
+        }
+
+        if normalizedEmail == Self.adminEmail {
+            if savedUser.isAdmin {
+                currentUser = savedUser
+                isLoggedIn = true
+                UserDefaults.standard.set(normalizedEmail, forKey: activeUserEmailKey)
+                UserDefaults.standard.set(true, forKey: loginKey)
+                return (true, "Admin login successful.")
+            }
+            return (false, "This account is not authorized as the BikeStore administrator.")
+        }
+
+        if Self.normalizedRole(savedUser.role) == Self.customerRole {
+            currentUser = savedUser
+            isLoggedIn = true
+            UserDefaults.standard.set(normalizedEmail, forKey: activeUserEmailKey)
+            UserDefaults.standard.set(true, forKey: loginKey)
+            return (true, "Login successful.")
+        }
+
+        return (false, "This account is not authorized for customer access.")
     }
 
     func logout() {
         currentUser = nil
         isLoggedIn = false
         UserDefaults.standard.set(false, forKey: loginKey)
+        UserDefaults.standard.removeObject(forKey: activeUserEmailKey)
     }
 
     func saveProfile(fullName: String, email: String, phone: String, address: String = "") -> (Bool, String) {
@@ -102,21 +184,61 @@ final class UserController: ObservableObject {
     func registeredCustomers() -> [User] {
         var users: [User] = []
 
-        if let current = currentUser, !current.isAdmin {
-            users.append(current)
+        for user in Self.loadSavedUsers() {
+            if !user.isAdmin {
+                if !users.contains(where: { $0.id == user.id }) {
+                    users.append(user)
+                }
+            }
         }
 
-        if let saved = Self.loadSavedUser(), !saved.isAdmin {
-            if !users.contains(where: { $0.id == saved.id }) {
-                users.append(saved)
-            }
+        if let current = currentUser, !current.isAdmin, !users.contains(where: { $0.id == current.id }) {
+            users.append(current)
         }
 
         return users
     }
 
+    func favoriteBikeIDs() -> [String] {
+        UserDefaults.standard.array(forKey: favoritesKey) as? [String] ?? []
+    }
+
+    func isFavorite(_ bikeId: UUID) -> Bool {
+        favoriteBikeIDs().contains(bikeId.uuidString)
+    }
+
+    func toggleFavorite(_ bikeId: UUID) -> Bool {
+        var ids = favoriteBikeIDs()
+        let key = bikeId.uuidString
+        if let index = ids.firstIndex(of: key) {
+            ids.remove(at: index)
+        } else {
+            ids.append(key)
+        }
+        UserDefaults.standard.set(ids, forKey: favoritesKey)
+        return ids.contains(key)
+    }
+
+    func favoriteBikes(in bikes: [Bike]) -> [Bike] {
+        let ids = Set(favoriteBikeIDs())
+        return bikes.filter { ids.contains($0.id.uuidString) }
+    }
+
     private func saveUser(_ user: User) {
-        guard let data = try? JSONEncoder().encode(user) else { return }
-        UserDefaults.standard.set(data, forKey: userKey)
+        var users = Self.loadSavedUsers()
+
+        if let index = users.firstIndex(where: { $0.id == user.id || Self.normalizedEmail($0.email) == Self.normalizedEmail(user.email) }) {
+            users[index] = user
+        } else {
+            users.append(user)
+        }
+
+        if let data = try? JSONEncoder().encode(users) {
+            UserDefaults.standard.set(data, forKey: usersKey)
+        }
+
+        if let legacyData = try? JSONEncoder().encode(user) {
+            UserDefaults.standard.set(legacyData, forKey: legacyUserKey)
+        }
     }
 }
